@@ -29,7 +29,7 @@ $( document ).ready(function() {
     assets.load('smb3_jump.wav', 'sound');
 
     //pic1 = new Sprites('pompier.jpg', 0, 0);
-    anim = new Animations('pompier.jpg', [{x: 0, y: 0}, {x: 60, y: 0}, {x: 120, y: 0}, {x: 180, y: 0} ]);
+    anim = new Animations('pompier.jpg', 0, 9);
 
     $(window).resize(function() {
         ctx.canvas.width = window.innerWidth;

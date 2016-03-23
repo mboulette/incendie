@@ -75,17 +75,21 @@ class Assets {
 }
 
 
-class Sprites {
-    constructor(filePath, x, y, width, height) {
-        this.filePath = filePath;
+class Mask {
+    constructor(x, y, width, height) {
         this.x = x || 0;
         this.y = y || 0;
-        this.width = width || 60;
-        this.height = height || 60;
+        this.width = width || 58;
+        this.height = height || 58;
+    }
+}
+
+
+class Pivotable extends Mask {
+    constructor(x, y, width, height) {
+        super(x, y, width, height);
         this.direction = 'none';
         this.rotation = 0;
-
-        assets.load(this.filePath);
     }
 
     rotate(angle) {
@@ -99,8 +103,6 @@ class Sprites {
     }
 
     draw (x, y) {
-        ctx.save();
-
         if (this.rotation != 0 || this.direction != 'none') {
             ctx.translate(x + (this.width/2), y + (this.height/2));
             
@@ -110,22 +112,35 @@ class Sprites {
 
             ctx.translate(0 - (x + (this.width/2)), 0 - (y + (this.height/2)));
         }
+    }
 
+}
+
+
+class Sprites extends Pivotable {
+    constructor(filePath, x, y, width, height) {
+        super(x, y, width, height);
+        this.filePath = filePath;
+        assets.load(this.filePath);
+    }
+
+    draw (x, y) {
+        ctx.save();
+        super.draw(x,y);
         ctx.drawImage(assets.files[this.filePath], this.x, this.y, this.width, this.height, x, y, this.width, this.height);
         ctx.restore();
     }
 
 }
 
-class Animations {
+
+class AnimatedSprites extends Pivotable {
     constructor(filePath, framePosition, frameRate, width, height) {
+        super(0, 0, width, height);
+
         this.filePath = filePath;
         this.framePosition = framePosition || [{x: 0, y: 0}];
         this.frameRate = frameRate || 200;
-        this.width = width || 60;
-        this.height = height || 60;
-        this.direction = 'none';
-        this.rotation = 0;
         this.timer = performance.now();
         this.sprites = [];
         this.frame = 0;
@@ -133,16 +148,6 @@ class Animations {
         for (var frame in this.framePosition) {
             this.sprites.push(new Sprites(this.filePath, this.framePosition[frame].x, this.framePosition[frame].y, this.width, this.height));
         }
-    }
-
-    rotate(angle) {
-        this.rotation = angle;
-        return this;
-    }
-
-    flip(direction) {
-        this.direction = direction;
-        return this;
     }
 
     update() {
@@ -163,14 +168,21 @@ class Animations {
 
 }
 
-/*
 
-class Mask {
-    constructor(x, y, width, height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+class Animations extends AnimatedSprites {
+    constructor (filePath, y, frameCount, frameRate, width, height) {
+        
+        y = y||0;
+        frameRate = frameRate||200;
+        width = width||58;
+        height = height||58;
+
+        var framePosition = [];
+
+        for (var i = 0; i < frameCount; i++) { 
+            framePosition.push({'x': i * width, 'y': y});
+        }
+
+        super(filePath, framePosition, frameRate, width, height);
     }
 }
-*/
