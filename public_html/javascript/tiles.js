@@ -1,4 +1,3 @@
-"use strict";
 
 class Assets {
     
@@ -76,11 +75,11 @@ class Assets {
 
 
 class Mask {
-    constructor(x, y, width, height) {
-        this.x = x || 0;
-        this.y = y || 0;
-        this.width = width || 58;
-        this.height = height || 58;
+    constructor(x = 0, y = 0, width = 58, height = 58) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
     }
 }
 
@@ -134,13 +133,31 @@ class Sprites extends Pivotable {
 }
 
 
+class Tiles extends Sprites {
+    constructor(filePath, maskX=0, maskY=0, currentX=0, currentY=0, width=64, height=64, rotation=0, flip='none') {
+        super(filePath, maskX, maskY, width, height);
+
+        this.direction = flip;
+        this.rotation = rotation;
+
+        this.current = {
+            'x' : currentX,
+            'y' : currentY
+        };
+    }
+
+    draw() {
+        super.draw(this.current.x, this.current.y);
+    }
+}
+
 class AnimatedSprites extends Pivotable {
-    constructor(filePath, framePosition, frameRate, width, height) {
+    constructor(filePath, framePosition = [{x: 0, y: 0}], frameRate = 200, width, height) {
         super(0, 0, width, height);
 
         this.filePath = filePath;
-        this.framePosition = framePosition || [{x: 0, y: 0}];
-        this.frameRate = frameRate || 200;
+        this.framePosition = framePosition;
+        this.frameRate = frameRate;
         this.timer = performance.now();
         this.sprites = [];
         this.frame = 0;
@@ -170,13 +187,8 @@ class AnimatedSprites extends Pivotable {
 
 
 class Animations extends AnimatedSprites {
-    constructor (filePath, y, frameCount, frameRate, width, height) {
+    constructor (filePath, y = 0, frameCount = 1, frameRate = 200, width = 58, height = 58) {
         
-        y = y||0;
-        frameRate = frameRate||200;
-        width = width||58;
-        height = height||58;
-
         var framePosition = [];
 
         for (var i = 0; i < frameCount; i++) { 

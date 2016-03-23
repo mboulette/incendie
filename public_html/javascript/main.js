@@ -12,7 +12,7 @@ var main = function() {
     //pic1.flip('v').draw(100, 50);
 
     anim.update();
-    anim.flip('h').draw(100, 50);
+    anim.flip('v').draw(100, 50);
 
     requestAnimationFrame(main);
 };
