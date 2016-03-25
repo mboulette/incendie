@@ -132,6 +132,61 @@ class Sprites extends Pivotable {
 
 }
 
+class Boundaries {
+    constructor(top=0, left=0, bottom=0, right=0) {
+        this.top = top;
+        this.left = left;
+        this.bottom = bottom;
+        this.right = right;
+    }
+
+    draw(x, y, width, height) {
+        ctx.save();
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+
+        var left = x - this.left;
+        var top = y - this.top;
+        var right = x + width + this.right;
+        var bottom = y + height + this.bottom;
+        var width  = width + this.left + this.right;
+        var height = height + this.top + this.bottom;
+        var x = 0;
+        var y = 0;
+
+        do {
+            ctx.moveTo(left+x, top);
+
+            if (top+y < bottom) {
+                ctx.lineTo(left, top+y);
+            } else {
+                ctx.lineTo(left - (bottom-top) + x, bottom);
+            }
+
+            x += 8; y += 8;
+        } while (x < width);
+
+        var x = 0;
+        var y = 0;
+        do {
+            ctx.moveTo(right, bottom-y);
+
+            if (right-x > left) {
+                ctx.lineTo(right-x, bottom);
+            } else {
+                ctx.lineTo(left, bottom + (right - left) - y );
+            }              
+
+            x += 8; y += 8;
+        } while (y <= height);
+
+        ctx.stroke();
+        ctx.restore();
+
+    }
+
+}
 
 class Tiles extends Sprites {
     constructor(filePath, maskX=0, maskY=0, currentX=0, currentY=0, width=64, height=64, rotation=0, flip='none') {
@@ -144,10 +199,20 @@ class Tiles extends Sprites {
             'x' : currentX,
             'y' : currentY
         };
+
+        this.bounds = [];
+
+    }
+
+    drawBounds() {
+        for (var i = 0; i < this.bounds.length; i++) {
+            this.bounds[i].draw(this.current.x, this.current.y, this.width, this.height);
+        }
     }
 
     draw() {
         super.draw(this.current.x, this.current.y);
+        return this;
     }
 }
 

@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <title>Incendie</title>
 
+    <link rel="stylesheet" href="css/builder.css">
+
     <script src="javascript/jquery-2.2.1.min.js"></script>
     <script src="javascript/tiles.js"></script>
     <script src="javascript/builder.js"></script>
@@ -12,10 +14,43 @@
 </head>
 <body>
 
-    <div style="width:8%; height:600px; border:1px solid #000; background-color:#eee; float:left;">
-        <button id="btnRotate" style="width:50px; height:50px; margin:2px;">Rotate</button><br />
-        <button id="btnFlipH" style="width:50px; height:50px; margin:2px;">Flip H</button><br />
-        <button id="btnFlipV" style="width:50px; height:50px; margin:2px;">Flip V</button><br />
+    <div style="width:8%; height:590px; border:1px solid #000; background-color:#eee; float:left; padding:5px;">
+        <button id="btnRotateG" class="tools">Tour G</button><button id="btnRotateD" class="tools">Tour D</button><br />
+        <button id="btnFlipH" class="tools">Flip H</button><button id="btnFlipV" class="tools">Flip V</button><br />
+
+        <br />
+        <button id="btnErase" class="tools">Effacer</button><button id="btnCopy" class="tools">Copier</button><br />
+
+        <br />
+        <strong>Inflammabilité</strong>
+        <select id='inflammability' style="width:100%;">
+            <option value='0'>0</option>
+            <option value='1'>1</option>
+            <option value='2'>2</option>
+            <option value='3'>3</option>
+            <option value='4'>4</option>
+            <option value='5'>5</option>
+        </select><br />
+
+
+        <br />
+        <strong>Calques</strong>
+        <select id='layers' style="width:100%;">
+            <option value='floors'>Planchers</option>
+            <option value='walls' selected>Murs et meubles</option>
+            <option value='furnitures'>Décorations</option>
+            <option value='specials'>Spécial</option>
+        </select><br />
+
+        <br />
+        <strong>Affichage</strong><br />
+        <label><input type='checkbox' id='viewGrid' checked /> Grille</label><br>
+        <label><input type='checkbox' id='viewBounds' checked/> Limites</label><br>
+        <label><input type='checkbox' id='viewBurning' /> Inflammabilité</label><br>
+        <label><input type='checkbox' id='viewCoor' /> Coordonnées</label><br>
+        <label><input type='checkbox' id='viewLayer' /> Transparents</label><br>
+
+
     </div>
     <div style="width:90%; height:600px; border:1px solid #000; overflow:auto; float:right;">
         <canvas width="2500" height="2500"></canvas>
