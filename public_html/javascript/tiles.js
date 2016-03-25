@@ -146,40 +146,33 @@ class Boundaries {
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
 
-        var left = x - this.left;
-        var top = y - this.top;
-        var right = x + width + this.right;
-        var bottom = y + height + this.bottom;
         var width  = width + this.left + this.right;
         var height = height + this.top + this.bottom;
-        var x = 0;
-        var y = 0;
 
-        do {
-            ctx.moveTo(left+x, top);
+        var left = x - this.left;
+        var top = y - this.top;
+        var right = x + width;
+        var bottom = y + height;
+            
+        for (var i = 0; i < width; i+=8) {
+            ctx.moveTo(left+i, top);
 
-            if (top+y < bottom) {
-                ctx.lineTo(left, top+y);
+            if (top+i < bottom) {
+                ctx.lineTo(left, top+i);
             } else {
-                ctx.lineTo(left - (bottom-top) + x, bottom);
+                ctx.lineTo(left - (bottom-top) + i, bottom);
             }
+        }
 
-            x += 8; y += 8;
-        } while (x < width);
+        for (var i = 0; i <= height; i+=8) {
+            ctx.moveTo(right, bottom-i);
 
-        var x = 0;
-        var y = 0;
-        do {
-            ctx.moveTo(right, bottom-y);
-
-            if (right-x > left) {
-                ctx.lineTo(right-x, bottom);
+            if (right-i > left) {
+                ctx.lineTo(right-i, bottom);
             } else {
-                ctx.lineTo(left, bottom + (right - left) - y );
-            }              
-
-            x += 8; y += 8;
-        } while (y <= height);
+                ctx.lineTo(left, bottom + (right - left) - i);
+            }  
+        }
 
         ctx.stroke();
         ctx.restore();
