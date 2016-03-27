@@ -245,7 +245,7 @@ class AnimatedSprites extends Pivotable {
 
 
 class Animations extends AnimatedSprites {
-    constructor (filePath, y = 0, frameCount = 1, frameRate = 200, width = 58, height = 58) {
+    constructor (filePath, y = 0, frameCount = 1, frameRate = 200, width = 64, height = 64) {
         
         var framePosition = [];
 
