@@ -1,0 +1,54 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Incendie</title>
+
+    <link rel="stylesheet" href="css/main.css">
+
+    <script src="javascript/jquery-2.2.1.min.js"></script>
+    <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
+    <script>
+        var peer = new Peer({key: '0n74rtceakcyds4i'});
+        var peer_id;
+        var conn;
+
+
+
+        peer.on('open', function(id) {
+          peer_id = id;
+          console.log('My peer ID is: ' + id);
+          $('#server-id').html(id);
+        });
+
+        peer.on('connection', function(e) {
+            conn = e;
+
+            conn.on('data', function(data) {
+              console.log('Received', data);
+            });
+
+        });
+
+        $(document).ready(function() {
+
+            $(document).on('click', '#btnSend', function(e){
+                  // Send messages
+                  conn.send('Hello!');
+            });
+
+        });
+
+
+    </script>
+
+</head>
+<body>
+
+    <div id='server-id'></div>
+
+    <button id='btnSend'>send</button>
+
+</body>
+</html>
