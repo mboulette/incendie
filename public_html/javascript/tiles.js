@@ -256,3 +256,47 @@ class Animations extends AnimatedSprites {
         super(filePath, framePosition, frameRate, width, height);
     }
 }
+
+class Fireman {
+
+    constructor(name = 'Fireman', color = 'red', currentX = 0, currentY = 0, direction = 'none') {
+
+        this.color = {
+            'red' :    0,
+            'purple' : 5,
+            'green' :  10,
+            'blue' :   15
+        }
+
+        this.direction = {
+            'none' :  new Animations('pompier.png', (0 + this.color[color]) * 64, 1), 
+            'right' : new Animations('pompier.png', (1 + this.color[color]) * 64, 8, 150),
+            'left' :  new Animations('pompier.png', (2 + this.color[color]) * 64, 8, 150),
+            'up' :    new Animations('pompier.png', (3 + this.color[color]) * 64, 6, 150),
+            'down' :  new Animations('pompier.png', (4 + this.color[color]) * 64, 6, 150),
+        };
+
+        this.name = name;
+        
+        this.current = {
+            'x' : currentX,
+            'y' : currentY,
+            'direction' : direction,
+            'color' : color
+        };
+
+    }
+
+    update() {
+        this.direction[this.current.direction].update();
+    }
+
+    draw() {
+        this.direction[this.current.direction].draw(this.current.x, this.current.y);
+
+        ctx.font = "8px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(this.name, this.current.x + 32, this.current.y);
+    }
+
+}

@@ -1,0 +1,398 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Incendie</title>
+
+    <link rel="stylesheet" href="css/main.css">
+
+    <script src="javascript/jquery-2.2.1.min.js"></script>
+    <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
+    <script src="javascript/tiles.js"></script>
+    <script>
+        var peer_players = [];
+        var peer;
+        var peer_server_name;
+        var peer_player_name;
+        var connected = false;
+
+        var timer = performance.now();
+        var ctx;
+        var assets = new Assets();
+        var players = [];
+        var players_colors = {'red' : false, 'purple' : false, 'green' : false, 'bleu' : false};
+
+        var main = function() {
+
+            if (connected) {
+                ctx.clearRect(0, 0, board.width, board.height);
+                //pompier1.update();
+                //pompier1.draw();
+
+                for (fireman in players) {
+                    players[fireman].update();
+                    players[fireman].draw();
+                }
+
+
+            }
+            requestAnimationFrame(main);
+        };
+
+
+        $( document ).on('AssetLoad', function(e, current, total){
+            if (current == total) {
+                main();
+            }
+        });
+
+
+
+
+        $(document).ready(function() {
+
+            board = $('canvas')[0];
+            ctx = board.getContext('2d');
+
+            ctx.canvas.width = window.innerWidth;
+            ctx.canvas.height = window.innerHeight;
+
+            pic1 = new Sprites('pompier.png', 0, 0);
+            /*
+            players['red'] = new Fireman('Fireman1', 'red');
+            players['purple'] = new Fireman('Fireman1', 'purple');
+            players['green'] = new Fireman('Fireman1', 'green');
+            players['blue'] = new Fireman('Fireman1', 'red');
+            */
+
+            /*
+            pompier2 = new Animations('pompier.png', 384, 8, 150);
+            pompier3 = new Animations('pompier.png', 704, 8, 150);
+            pompier4 = new Animations('pompier.png', 1024, 8, 150);
+            */
+
+            feu1 = new Animations('fire.png', 0, 5, 150);
+            feu2 = new Animations('fire.png', 64, 5, 150);
+            feu3 = new Animations('fire.png', 128, 5, 150);
+            feu4 = new Animations('fire.png', 192, 5, 150);
+            feu5 = new Animations('fire.png', 256, 5, 150);
+            feu6 = new Animations('fire.png', 320, 5, 150);
+            feu7 = new Animations('fire.png', 384, 5, 150);
+
+            $(window).resize(function() {
+                ctx.canvas.width = window.innerWidth;
+                ctx.canvas.height = window.innerHeight;        
+            });
+
+            $(document).on('peer.get_players_list', function(e){
+                peer_send({'action' : 'upd_players_list', 'players' : peer_players, 'firemans' : get_fireman() });
+                $(document).trigger('peer.upd_players_list', {'players' : peer_players, 'firemans' : get_fireman()});
+            });
+
+            $(document).on('peer.upd_players_list', function(e, data){
+                console.log('Players List', data);
+                var name_list = [];
+
+                //Ajouter les nouveaux
+                for(fireman in data.firemans) {
+
+                    if ( !(data.firemans[fireman].name in players) ) {
+                        players[data.firemans[fireman].name] = (new Fireman(
+                            data.firemans[fireman].name,
+                            data.firemans[fireman].current.color,
+                            data.firemans[fireman].current.x,
+                            data.firemans[fireman].current.y,
+                            data.firemans[fireman].current.direction));
+                        players_colors[data.firemans[fireman].current.color] = true;
+                    }
+                    name_list.push(data.firemans[fireman].name);
+                }
+
+               
+                //Supprimer les vieux
+                for(fireman in players) {
+                    if ($.inArray(fireman, name_list) == -1) {
+                        remove_fireman(fireman);
+                    }                    
+                }
+
+            });
+
+            $(document).on('peer.upd_position', function(e, data){
+                console.log('Update positions', data);
+
+                players[data.player].current.x = data.current.x,
+                players[data.player].current.y = data.current.y,
+                players[data.player].current.direction = data.current.direction;
+
+            });
+
+
+            $(document).on('peer.upd_players_list', function(e, data){
+                console.log('Players List', data);
+                var name_list = [];
+
+                //Ajouter les nouveaux
+                for(fireman in data.firemans) {
+
+                    if ( !(data.firemans[fireman].name in players) ) {
+                        players[data.firemans[fireman].name] = (new Fireman(
+                            data.firemans[fireman].name,
+                            data.firemans[fireman].current.color,
+                            data.firemans[fireman].current.x,
+                            data.firemans[fireman].current.y,
+                            data.firemans[fireman].current.direction));
+                        players_colors[data.firemans[fireman].current.color] = true;
+                    }
+                    name_list.push(data.firemans[fireman].name);
+                }
+
+               
+                //Supprimer les vieux
+                for(fireman in players) {
+                    if ($.inArray(fireman, name_list) == -1) {
+                        remove_fireman(fireman);
+                    }                    
+                }
+
+            });
+
+
+            $(document).on('peer.message', function(e, data){
+                console.log('Message reçu', data);
+            });
+
+            $(document).on('peer.create_fireman', function(e, data){
+                console.log('Create Fireman', data);
+                add_fireman(data.player, data.x, data.y);
+            });
+
+            $(document).on('peer.keydown', function(e, data){
+                console.log('Keydown reçu', data);
+
+                players[data.player].current.x = data.x;
+                players[data.player].current.y = data.y;
+
+                switch(data.key) {
+                    case 37:
+                        players[data.player].current.direction = 'left';
+                        break;
+                    case 38:
+                        players[data.player].current.direction = 'up';
+                        break;
+                    case 39:
+                        players[data.player].current.direction = 'right';
+                        break;
+                    case 40:
+                        players[data.player].current.direction = 'down';
+                        break;
+                    default:
+                        players[data.player].current.direction = 'none';
+                }
+
+                peer_send({'action' : 'upd_position', 'player' : data.player, 'current' : players[data.player].current });
+
+            });
+
+
+            $('#input_player_name').val('#'+Math.floor(Math.random()*16777215).toString(16));
+
+            $(document).on('click', '#btnCreateSever', function(e){
+                peer_server_name = $('#input_server_name').val();
+                peer_player_name = $('#input_player_name').val();
+
+                peer = new Peer(peer_server_name, {key: '0n74rtceakcyds4i'});
+
+                peer.on('open', function(id) {
+                    console.log('Creation du serveur: ' + id);
+                    $('#form_peer_connect').hide();
+                    //$('#form_peer_send').show();
+                    $('#game_canvas').show();
+                    connected = true;
+
+                    peer_players.push(peer_player_name);
+                    $(document).trigger('peer.create_fireman', {'player' : peer_player_name, 'x' : 20, 'y' : 20});
+                    $(document).trigger('peer.upd_players_list', {'players' : peer_players, 'firemans' : get_fireman()});
+
+                });
+
+                peer.on('connection', function(conn) {
+
+                    peer_players.push(conn.label);
+                    console.log('Un joueur a établi une connexion: ', conn.label);
+
+                    conn.on('data', function(data) {
+                        //console.log('Data reçu', data);
+                        $(document).trigger('peer.' + data.action, data);
+
+                    });
+
+                    conn.on('close', function() {
+                        console.log('Déconnecté', this.label);
+                        remove_fireman(this.label);
+
+                        peer_players.splice($.inArray(this.label, peer_players),1);
+                        peer_send({'action' : 'upd_players_list', 'players' : peer_players, 'firemans' : get_fireman()});
+                        $(document).trigger('peer.upd_players_list', {'players' : peer_players, 'firemans' : get_fireman()});
+
+                    });
+
+                });
+
+            });
+
+
+
+            $(document).on('click', '#btnConnectToServer', function(e){
+                peer_server_name = $('#input_server_name').val();
+                peer_player_name = $('#input_player_name').val();
+
+                peer = new Peer({key: '0n74rtceakcyds4i'});
+                conn = peer.connect(peer_server_name, {'label' : peer_player_name});
+                
+                conn.on('open', function() {
+                    console.log('Connexion établi avec le serveur ', conn);
+
+                    start_x = Math.floor((Math.random() * ctx.canvas.width) + 1);
+                    start_y = Math.floor((Math.random() * ctx.canvas.height) + 1);
+
+                    peer_send({'action' : 'create_fireman', 'player' : conn.label, 'x' : start_x, 'y' : start_y });
+                    peer_send({'action' : 'get_players_list'});
+
+                    $('#form_peer_connect').hide();
+                    //$('#form_peer_send').show();
+                    $('#game_canvas').show();
+                    connected = true;
+
+                });
+
+                conn.on('close', function() {
+                    alert('Déconnecté du serveur');
+                    window.location.reload();
+                });
+
+                conn.on('data', function(data) {
+                    //console.log('Data reçu', data);
+                    $(document).trigger('peer.' + data.action, data);
+                });
+
+            });
+
+
+            $(document).on('click', '#btnSend', function(e){
+                peer_send({'action' : 'message', 'player' : peer_player_name, 'msg' : $('#input_peer_msg').val()});
+
+            });
+
+
+            $(document).on('keydown', function (e) {
+                if (connected) {
+                    console.log('keydown : ' +  e.which);
+                    peer_send({'action' : 'keydown', 'player' : peer_player_name, 'key' : e.which, 'x' : players[peer_player_name].current.x, 'y' : players[peer_player_name].current.y });
+                    return false;
+                }
+            });
+
+
+            var add_fireman = function(name, x = 20, y = 20) {
+                
+                console.log('Add :'+name, x, y);
+
+                for (color in players_colors) {
+                    if (!players_colors[color]) {
+                        players[name] = (new Fireman(name, color, x, y));
+                        players_colors[color] = true;
+                        break;
+                    }
+                }
+            }
+
+            var remove_fireman = function(name) {
+                
+                console.log('Remove :'+name);
+               
+                players_colors[players[name].current.color] = false;
+                delete players[name];
+                
+            }
+
+            var get_fireman_name = function() {
+                var tmp_fireman = [];
+
+                for(fireman in players) {
+                    tmp_fireman.push(players[fireman].name);
+                }
+
+                return tmp_fireman;  
+            }
+
+            var get_fireman = function() {
+                var tmp_fireman = [];
+
+                console.log('get_fireman', players);
+
+                for(fireman in players) {
+                    tmp_fireman.push({'name' : players[fireman].name, 'current' : players[fireman].current});                   
+                }
+
+                return tmp_fireman;
+            }
+
+            var peer_send = function(data) {
+                //console.log('Data envoyé', data);
+
+                for (cn in peer.connections) {
+                    peer.connections[cn][0].send(data);
+                }
+
+            }
+
+            
+            var getUrlVars = function () {
+                // Read a page's GET URL variables and return them as an associative array.
+                var vars = [], hash;
+                var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+                for(var i = 0; i < hashes.length; i++)
+                {
+                    hash = hashes[i].split('=');
+                    vars.push(hash[0]);
+                    vars[hash[0]] = hash[1];
+                }
+                return vars;
+            }
+
+            if (typeof getUrlVars()['server'] != 'undefined') {
+                $('#label_server').hide()
+                $('#input_server_name').value = getUrlVars()['server'];
+                $('#btnCreateSever').hide();
+
+            }
+
+
+        });
+
+
+    </script>
+
+</head>
+<body>
+
+
+    <div id="form_peer_connect">
+        <label id='label_server'>Nom du serveur : <input id="input_server_name" value="test"></label><br>
+        <label>Votre nom : <input id="input_player_name" ></label><br>
+
+        <button id='btnCreateSever'>Créer un serveur</button>
+        <button id='btnConnectToServer'>Joindre le serveur</button>
+    </div>
+
+    <div id="form_peer_send" style="display:none;">
+        <label>Message : <input id="input_peer_msg" value='test'></label><br>
+        <button id='btnSend'>Envoyer</button>
+    </div>
+
+    <canvas id="game_canvas"></canvas>
+
+</body>
+</html>

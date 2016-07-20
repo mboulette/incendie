@@ -16,9 +16,31 @@
         var peer_player_name;
 
 
+        // Read a page's GET URL variables and return them as an associative array.
+        function getUrlVars()
+        {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for(var i = 0; i < hashes.length; i++)
+            {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+
 
 
         $(document).ready(function() {
+
+            if (typeof getUrlVars()['server'] != 'undefined') {
+                $('#label_server').hide()
+                $('#input_server_name').value = getUrlVars()['server'];
+                $('#btnConnectToServer').hide();
+
+            }
+
 
             $(document).on('peer.get_players_list', function(e){
                 peer_send({'action' : 'upd_players_list', 'players' : peer_players});
@@ -126,15 +148,15 @@
 
 
     <div id="form_peer_connect">
-        <label>Nom du serveur : <input id="input_server_name" value="test"></lebel><br>
-        <label>Votre nom : <input id="input_player_name" ></lebel><br>
+        <label id='label_server'>Nom du serveur : <input id="input_server_name" value="test"></label><br>
+        <label>Votre nom : <input id="input_player_name" ></label><br>
 
         <button id='btnCreateSever'>Créer un serveur</button>
         <button id='btnConnectToServer'>Joindre le serveur</button>
     </div>
 
     <div id="form_peer_send" style="display:none;">
-        <label>Message : <input id="input_peer_msg" value='test'></lebel><br>
+        <label>Message : <input id="input_peer_msg" value='test'></label><br>
         <button id='btnSend'>Envoyer</button>
     </div>
 
