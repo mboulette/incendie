@@ -261,6 +261,9 @@ class Fireman {
 
     constructor(name = 'Fireman', color = 'red', currentX = 0, currentY = 0, direction = 'none') {
 
+        this.frameRate = 100;
+        this.timer = performance.now();
+
         this.color = {
             'red' :    0,
             'purple' : 5,
@@ -270,10 +273,10 @@ class Fireman {
 
         this.direction = {
             'none' :  new Animations('pompier.png', (0 + this.color[color]) * 64, 1), 
-            'right' : new Animations('pompier.png', (1 + this.color[color]) * 64, 8, 150),
-            'left' :  new Animations('pompier.png', (2 + this.color[color]) * 64, 8, 150),
-            'up' :    new Animations('pompier.png', (3 + this.color[color]) * 64, 6, 150),
-            'down' :  new Animations('pompier.png', (4 + this.color[color]) * 64, 6, 150),
+            'right' : new Animations('pompier.png', (1 + this.color[color]) * 64, 8, 100),
+            'left' :  new Animations('pompier.png', (2 + this.color[color]) * 64, 8, 100),
+            'up' :    new Animations('pompier.png', (3 + this.color[color]) * 64, 6, 100),
+            'down' :  new Animations('pompier.png', (4 + this.color[color]) * 64, 6, 100),
         };
 
         this.name = name;
@@ -287,7 +290,28 @@ class Fireman {
 
     }
 
+    move() {
+        if (performance.now() - this.timer > this.frameRate) {
+            switch(this.current.direction) {
+                case 'left':
+                    this.current.x -= 5;
+                    break;
+                case 'up':
+                    this.current.y -= 5;
+                    break;
+                case 'right':
+                    this.current.x += 5;
+                    break;
+                case 'down':
+                    this.current.y += 5;
+                    break;
+            }
+            this.timer = performance.now();
+        }
+    }
+
     update() {
+
         this.direction[this.current.direction].update();
     }
 

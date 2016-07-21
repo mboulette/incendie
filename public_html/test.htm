@@ -31,6 +31,7 @@
                 //pompier1.draw();
 
                 for (fireman in players) {
+                    players[fireman].move();
                     players[fireman].update();
                     players[fireman].draw();
                 }
@@ -290,6 +291,7 @@
                 if (connected) {
                     console.log('keydown : ' +  e.which);
                     peer_send({'action' : 'keydown', 'player' : peer_player_name, 'key' : e.which, 'x' : players[peer_player_name].current.x, 'y' : players[peer_player_name].current.y });
+                    $(document).trigger('peer.keydown', {'player' : peer_player_name, 'key' : e.which, 'x' : players[peer_player_name].current.x, 'y' : players[peer_player_name].current.y});
                     return false;
                 }
             });
