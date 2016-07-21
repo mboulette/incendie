@@ -259,68 +259,77 @@ class Animations extends AnimatedSprites {
 
 class Fireman {
 
-    constructor(name = 'Fireman', color = 'red', currentX = 0, currentY = 0, direction = 'none') {
+    constructor(conn_id = '', name = 'Fireman', color = 'red', currentX = 0, currentY = 0, direction = 'none') {
 
-        this.frameRate = 100;
+        this.frameRate = 50;
         this.timer = performance.now();
 
-        this.color = {
-            'red' :    0,
-            'purple' : 5,
-            'green' :  10,
-            'blue' :   15
-        }
-
-        this.direction = {
-            'none' :  new Animations('pompier.png', (0 + this.color[color]) * 64, 1), 
-            'right' : new Animations('pompier.png', (1 + this.color[color]) * 64, 8, 100),
-            'left' :  new Animations('pompier.png', (2 + this.color[color]) * 64, 8, 100),
-            'up' :    new Animations('pompier.png', (3 + this.color[color]) * 64, 6, 100),
-            'down' :  new Animations('pompier.png', (4 + this.color[color]) * 64, 6, 100),
-        };
-
-        this.name = name;
-        
         this.current = {
+            'id' : conn_id,
+            'name' : name,
             'x' : currentX,
             'y' : currentY,
             'direction' : direction,
             'color' : color
         };
 
+        this.animations = {
+            'none-red' :     new Animations('pompier.png', 0 * 64, 1), 
+            'right-red' :    new Animations('pompier.png', 1 * 64, 8, 100),
+            'left-red' :     new Animations('pompier.png', 2 * 64, 8, 100),
+            'up-red' :       new Animations('pompier.png', 3 * 64, 6, 100),
+            'down-red' :     new Animations('pompier.png', 4 * 64, 6, 100),
+
+            'none-purple' :  new Animations('pompier.png', 5 * 64, 1), 
+            'right-purple' : new Animations('pompier.png', 6 * 64, 8, 100),
+            'left-purple' :  new Animations('pompier.png', 7 * 64, 8, 100),
+            'up-purple' :    new Animations('pompier.png', 8 * 64, 6, 100),
+            'down-purple' :  new Animations('pompier.png', 9 * 64, 6, 100),
+
+            'none-green' :   new Animations('pompier.png', 10 * 64, 1), 
+            'right-green' :  new Animations('pompier.png', 11 * 64, 8, 100),
+            'left-green' :   new Animations('pompier.png', 12 * 64, 8, 100),
+            'up-green' :     new Animations('pompier.png', 13 * 64, 6, 100),
+            'down-green' :   new Animations('pompier.png', 14 * 64, 6, 100),
+
+            'none-blue' :    new Animations('pompier.png', 15 * 64, 1), 
+            'right-blue' :   new Animations('pompier.png', 16 * 64, 8, 100),
+            'left-blue' :    new Animations('pompier.png', 17 * 64, 8, 100),
+            'up-blue' :      new Animations('pompier.png', 18 * 64, 6, 100),
+            'down-blue' :    new Animations('pompier.png', 19 * 64, 6, 100),
+        };
+
     }
 
-    move() {
-        if (performance.now() - this.timer > this.frameRate) {
-            switch(this.current.direction) {
-                case 'left':
-                    this.current.x -= 5;
-                    break;
-                case 'up':
-                    this.current.y -= 5;
-                    break;
-                case 'right':
-                    this.current.x += 5;
-                    break;
-                case 'down':
-                    this.current.y += 5;
-                    break;
-            }
-            this.timer = performance.now();
+    move(delta) {
+        switch(this.current.direction) {
+            case 'left':
+                this.current.x -= delta/10;
+                break;
+            case 'up':
+                this.current.y -= delta/10;
+                break;
+            case 'right':
+                this.current.x += delta/10;
+                break;
+            case 'down':
+                this.current.y += delta/10;
+                break;
         }
     }
 
-    update() {
-
-        this.direction[this.current.direction].update();
+    update(delta) {
+        this.move(delta);
+        this.animations[this.current.direction+'-'+this.current.color].update();
     }
 
     draw() {
-        this.direction[this.current.direction].draw(this.current.x, this.current.y);
+
+        this.animations[this.current.direction+'-'+this.current.color].draw(this.current.x, this.current.y);
 
         ctx.font = "8px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(this.name, this.current.x + 32, this.current.y);
+        ctx.fillText(this.current.name, this.current.x + 32, this.current.y);
     }
 
 }

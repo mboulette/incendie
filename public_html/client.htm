@@ -3,59 +3,79 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Incendie - Multiplayer</title>
+    <title>Incendie</title>
 
-    <style>
-        html, body {
-          width:  100%;
-          height: 100%;
-          margin: 0px;
-          overflow: hidden;
-        }
+    <link rel="stylesheet" href="css/main.css">
 
-        canvas { background-color: #eee;
-          display: none;
-          width:  100%;
-          height: 100%;
-        }
-
-        #form_peer_send {display:none;}
-    </style>
-
-    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="javascript/jquery-2.2.1.min.js"></script>
     <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
     <script src="javascript/tiles.js"></script>
     <script>
 
-        var peer_players = [];
         var peer;
         var peer_server_name;
         var peer_player_name;
-        var connected = false;
-
+       
         var timer = performance.now();
         var ctx;
         var assets = new Assets();
         var players = [];
-        var players_colors = {'red' : false, 'purple' : false, 'green' : false, 'bleu' : false};
+        var keyboard = [];
 
-        var main = function() {
+        var peer_send = function(data) {
+            //console.log('Data envoyé', data);
 
-            if (connected) {
-                ctx.clearRect(0, 0, board.width, board.height);
-                //pompier1.update();
-                //pompier1.draw();
-
-                for (fireman in players) {
-                    players[fireman].update();
-                    players[fireman].draw();
-                }
-
-
+            for (cn in peer.connections) {
+                peer.connections[cn][0].send(data);
             }
+
+        }
+
+        var change_direction = function(player) {
+            if (keyboard[37]) {
+                if (player.direction != 'left') peer_send({'action' : 'change_direction', 'direction' : 'left' });
+                player.direction = 'left';
+                return;
+            }
+            if (keyboard[38]) {
+                if (player.direction != 'up') peer_send({'action' : 'change_direction', 'direction' : 'up' });
+                player.direction = 'up';
+                return;
+            }
+            if (keyboard[39]) {
+                if (player.direction != 'right') peer_send({'action' : 'change_direction', 'direction' : 'right' });
+                player.direction = 'right';
+                return;
+            }
+            if (keyboard[40]) {
+                if (player.direction != 'down') peer_send({'action' : 'change_direction', 'direction' : 'down' });
+                player.direction = 'down';
+                return;
+            }
+
+            if (player.direction != 'none') {
+                player.direction = 'none';
+                peer_send({'action' : 'change_direction', 'direction' : 'none' });
+                return;
+            }
+        }
+
+        var main = function(now) {
+
+            ctx.clearRect(0, 0, board.width, board.height);
+
+            for (var i = 0; i < players.length; i++) {
+                players[i].update(now-timer);
+                players[i].draw();
+
+                if (players[i].current.id == peer.connections[peer_server_name][0].id) {
+                    change_direction(players[i].current);
+                }
+            }
+
+            timer=now;
             requestAnimationFrame(main);
         };
-
 
         $( document ).on('AssetLoad', function(e, current, total){
             if (current == total) {
@@ -72,215 +92,71 @@
             ctx.canvas.width = window.innerWidth;
             ctx.canvas.height = window.innerHeight;
 
-            pic1 = new Sprites('pompier.png', 0, 0);
-            /*
-            players['red'] = new Fireman('Fireman1', 'red');
-            players['purple'] = new Fireman('Fireman1', 'purple');
-            players['green'] = new Fireman('Fireman1', 'green');
-            players['blue'] = new Fireman('Fireman1', 'red');
-            */
-
-            /*
-            pompier2 = new Animations('pompier.png', 384, 8, 150);
-            pompier3 = new Animations('pompier.png', 704, 8, 150);
-            pompier4 = new Animations('pompier.png', 1024, 8, 150);
-            */
-
-            feu1 = new Animations('fire.png', 0, 5, 150);
-            feu2 = new Animations('fire.png', 64, 5, 150);
-            feu3 = new Animations('fire.png', 128, 5, 150);
-            feu4 = new Animations('fire.png', 192, 5, 150);
-            feu5 = new Animations('fire.png', 256, 5, 150);
-            feu6 = new Animations('fire.png', 320, 5, 150);
-            feu7 = new Animations('fire.png', 384, 5, 150);
 
             $(window).resize(function() {
                 ctx.canvas.width = window.innerWidth;
                 ctx.canvas.height = window.innerHeight;        
             });
 
-
-            $(document).on('peer.get_players_list', function(e){
-                peer_send({'action' : 'upd_players_list', 'players' : peer_players});
-                $(document).trigger('peer.upd_players_list', {'players' : peer_players});
-            });
-
-            $(document).on('peer.upd_players_list', function(e, data){
-                console.log('Players List', data.players);
-                peer_players = data.players;
-
-                //Ajouter les nouveaux
-                for(fireman of peer_players) {
-                    if ( !(fireman in players) ) {
-                        add_fireman(fireman);
-                    }
-                }
-                
-                //Supprimer les vieux 
-                for(fireman in players) {
-                    if ($.inArray(fireman, peer_players) == -1) {
-                        remove_fireman(fireman);
-                    }                    
-                }
-
-            });
-
-            $(document).on('peer.message', function(e, data){
-                console.log('Message reçu', data);
-            });
-
-            $(document).on('peer.keydown', function(e, data){
-                console.log('Keydown reçu', data);
-            });
-
             $('#input_player_name').val('#'+Math.floor(Math.random()*16777215).toString(16));
 
-            $(document).on('click', '#btnCreateSever', function(e){
-                peer_server_name = $('#input_server_name').val();
-                peer_player_name = $('#input_player_name').val();
+            $(document).on('peer.upd_players', function(e, data){
+                //console.log('Mis à jour des joueurs:', data);
+                
+                //Créer les joueur manquant
+                for (var i = players.length; i < data.players.length; i++) {
+                    players.push(new Fireman());
+                }
 
-                peer = new Peer(peer_server_name, {key: '0n74rtceakcyds4i'});
+                players = players.slice(0, data.players.length);
 
-                peer.on('open', function(id) {
-                    console.log('Creation du serveur: ' + id);
-                    $('#form_peer_connect').hide();
-                    //$('#form_peer_send').show();
-                    $('#game_canvas').show();
-                    connected = true;
-
-                    peer_players.push(peer_player_name);
-                    //add_fireman(peer_player_name);
-                    $(document).trigger('peer.upd_players_list', {'players' : peer_players});
-
-                });
-
-                peer.on('connection', function(conn) {
-
-                    peer_players.push(conn.label);
-                    console.log('Un joueur a établi une connexion: ', conn.label);
-                    
-                    tmp_coor = conn.metadata.split(':');
-                    console.log(tmp_coor);                   
-                    add_fireman(conn.label, tmp_coor[0], tmp_coor[1]);
-
-
-                    conn.on('data', function(data) {
-                        //console.log('Data reçu', data);
-                        $(document).trigger('peer.' + data.action, data);
-
-                    });
-
-                    conn.on('close', function() {
-                        console.log('Déconnecté', this.label);
-
-                        //remove_fireman(this.label);
-                        peer_players.splice($.inArray(this.label, peer_players),1);
-                        
-                        peer_send({'action' : 'upd_players_list', 'players' : peer_players});
-                        $(document).trigger('peer.upd_players_list', {'players' : peer_players});
-                    });
-
-                });
+                //Mettre à jour les position des joueurs
+                for (var i = 0; i < data.players.length; i++) {
+                    //console.log(data.players[i]);
+                    players[i].current = data.players[i];
+                }
 
             });
 
-
             $(document).on('click', '#btnConnectToServer', function(e){
+                
                 peer_server_name = $('#input_server_name').val();
                 peer_player_name = $('#input_player_name').val();
-
-                start_x = Math.floor((Math.random() * ctx.canvas.width) + 1);
-                start_y = Math.floor((Math.random() * ctx.canvas.height) + 1);
-
                 peer = new Peer({key: '0n74rtceakcyds4i'});
-                conn = peer.connect(peer_server_name, {'label' : peer_player_name, 'metadata' : start_x+':'+start_y});
+
+                conn = peer.connect(peer_server_name, {'label' : peer_player_name});
 
                 conn.on('open', function() {
-                    console.log('Connexion établi avec le serveur ', conn);
-                    add_fireman(conn.label,  start_x, start_y);
-                    peer_send({'action' : 'get_players_list'});
 
                     $('#form_peer_connect').hide();
-                    //$('#form_peer_send').show();
                     $('#game_canvas').show();
-                    connected = true;
 
+                    console.log('Connexion établi avec le serveur ', conn);
                 });
 
                 conn.on('data', function(data) {
-                    //console.log('Data reçu', data);
                     $(document).trigger('peer.' + data.action, data);
+                });
+
+                conn.on('close', function() {
+                    alert('Déconnecté du serveur');
+                    window.location.reload();
                 });
 
             });
 
 
-            $(document).on('click', '#btnSend', function(e){
-                peer_send({'action' : 'message', 'player' : peer_player_name, 'msg' : $('#input_peer_msg').val()});
-
-            });
-
-            
             $(document).on('keydown', function (e) {
-                if (connected) {
-                    console.log('keydown : ' +  e.which);
-                    peer_send({'action' : 'keydown', 'player' : peer_player_name, 'key' : e.which, 'x' : players[peer_player_name].current.y, 'y' : players[peer_player_name].current.y });
-                    return false;
-                }
+                keyboard[e.which] = true;
+                return false;
+            });
+
+            $(document).on('keyup', function (e) {
+                keyboard[e.which] = false;
+                return false;
             });
 
 
-            // Read a page's GET URL variables and return them as an associative array.
-            var getUrlVars = function() {
-
-                var vars = [], hash;
-                var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-                for(var i = 0; i < hashes.length; i++)
-                {
-                    hash = hashes[i].split('=');
-                    vars.push(hash[0]);
-                    vars[hash[0]] = hash[1];
-                }
-                return vars;
-            };
-
-
-            var peer_send = function(data) {
-
-                for (cn in peer.connections) {
-                    peer.connections[cn][0].send(data);
-                }
-
-            };
-
-            var add_fireman = function(name, x = 20, y = 20) {
-                
-                console.log('Add :'+name, x, y);
-
-                for (color in players_colors) {
-                    if (!players_colors[color]) {
-                        players[name] = (new Fireman(name, color, x, y));
-                        players_colors[color] = true;
-                        break;
-                    }
-                }
-            }
-
-            var remove_fireman = function(name) {
-                
-                console.log('Remove :'+name);
-               
-                players_colors[players[name].current.color] = false;
-                delete players[name];
-                
-            }
-
-            if (typeof getUrlVars()['server'] != 'undefined') {
-                $('#label_server').hide()
-                $('#input_server_name').value = getUrlVars()['server'];
-                $('#btnCreateSever').hide();
-
-            }
 
         });
 
@@ -295,13 +171,7 @@
         <label id='label_server'>Nom du serveur : <input id="input_server_name" value="test"></label><br>
         <label>Votre nom : <input id="input_player_name" ></label><br>
 
-        <button id='btnCreateSever'>Créer un serveur</button>
         <button id='btnConnectToServer'>Joindre le serveur</button>
-    </div>
-
-    <div id="form_peer_send">
-        <label>Message : <input id="input_peer_msg" value='test'></label><br>
-        <button id='btnSend'>Envoyer</button>
     </div>
 
     <canvas id="game_canvas"></canvas>
