@@ -7,7 +7,7 @@
 
     <link rel="stylesheet" href="css/main.css">
 
-    <script src="javascript/jquery-2.2.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
     <script src="javascript/tiles.js"></script>
     <script>
@@ -73,7 +73,9 @@
 
         var main = function(now) {
 
+            ctx.save();
             ctx.clearRect(0, 0, board.width, board.height);
+            ctx.translate((board.width/2) - players[0].current.x - 32, (board.height/2) - players[0].current.y - 32);
 
             for (var i = 0; i < players.length; i++) {
                 players[i].update(now-timer_delta);
@@ -87,6 +89,7 @@
                 upd_players();
             }
 
+            ctx.restore();
             timer_delta=now;
             requestAnimationFrame(main);
         };
@@ -144,8 +147,8 @@
                     $('#form_peer_connect').hide();
                     $('#game_canvas').show();
 
-                    start_x = Math.floor((Math.random() * ctx.canvas.width) + 1);
-                    start_y = Math.floor((Math.random() * ctx.canvas.height) + 1);
+                    start_x = Math.floor((Math.random() * (ctx.canvas.width/2)) + 1);
+                    start_y = Math.floor((Math.random() * (ctx.canvas.height/2)) + 1);
                     players.push(new Fireman(id, peer_player_name, players_colors.shift(), start_x, start_y));
 
                     console.log('Le serveur a été créé: ' + id);
@@ -156,8 +159,8 @@
 
                     //console.log(conn);
 
-                    start_x = Math.floor((Math.random() * ctx.canvas.width) + 1);
-                    start_y = Math.floor((Math.random() * ctx.canvas.height) + 1);
+                    start_x = Math.floor((Math.random() * (ctx.canvas.width/2)) + 1);
+                    start_y = Math.floor((Math.random() * (ctx.canvas.height/2)) + 1);
                     players.push(new Fireman(conn.id, conn.label, players_colors.shift(), start_x, start_y));
 
                     conn.on('data', function(data) {
@@ -182,13 +185,17 @@
             });
 
             $(document).on('keydown', function (e) {
-                keyboard[e.which] = true;
-                return false;
+                if (peer) {
+                    keyboard[e.which] = true;
+                    return false;
+                }
             });
 
             $(document).on('keyup', function (e) {
-                keyboard[e.which] = false;
-                return false;
+                if (peer) {
+                    keyboard[e.which] = false;
+                    return false;
+                }
             });
 
         });

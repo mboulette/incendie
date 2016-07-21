@@ -7,7 +7,7 @@
 
     <link rel="stylesheet" href="css/main.css">
 
-    <script src="javascript/jquery-2.2.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
     <script src="javascript/tiles.js"></script>
     <script>
@@ -62,17 +62,23 @@
 
         var main = function(now) {
 
+            ctx.save();
             ctx.clearRect(0, 0, board.width, board.height);
+
+            for (var i = 0; i < players.length; i++) {
+                if (players[i].current.id == peer.connections[peer_server_name][0].id) {
+                    ctx.translate((board.width/2) - players[i].current.x - 32, (board.height/2) - players[i].current.y - 32);
+                    change_direction(players[i].current);
+                    break;
+                }
+            }
 
             for (var i = 0; i < players.length; i++) {
                 players[i].update(now-timer);
                 players[i].draw();
-
-                if (players[i].current.id == peer.connections[peer_server_name][0].id) {
-                    change_direction(players[i].current);
-                }
             }
 
+            ctx.restore();
             timer=now;
             requestAnimationFrame(main);
         };
@@ -147,16 +153,36 @@
 
 
             $(document).on('keydown', function (e) {
-                keyboard[e.which] = true;
-                return false;
+                if (peer) {
+                    keyboard[e.which] = true;
+                    return false;
+                }
             });
 
             $(document).on('keyup', function (e) {
-                keyboard[e.which] = false;
-                return false;
+                if (peer) {
+                    keyboard[e.which] = false;
+                    return false;
+                }
             });
 
+            var getUrlVars = function () {
+                // Read a page's GET URL variables and return them as an associative array.
+                var vars = [], hash;
+                var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+                for(var i = 0; i < hashes.length; i++)
+                {
+                    hash = hashes[i].split('=');
+                    vars.push(hash[0]);
+                    vars[hash[0]] = hash[1];
+                }
+                return vars;
+            }
 
+            if (typeof getUrlVars()['server'] != 'undefined') {
+                $('#label_server').hide()
+                $('#input_server_name').value = getUrlVars()['server'];
+            }
 
         });
 
