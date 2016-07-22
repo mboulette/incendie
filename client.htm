@@ -126,7 +126,7 @@
             $('#input_player_name').val('#'+Math.floor(Math.random()*16777215).toString(16));
 
             $(document).on('peer.load_map', function(e, data){
-                map = new Map('https://raw.githubusercontent.com/mboulette/incendie/master/public_html/' + data.map);
+                map = new Map('http://mboulette.16mb.com/' + data.map);
             });
 
             $(document).on('peer.upd_players', function(e, data){

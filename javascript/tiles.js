@@ -37,7 +37,7 @@ class Assets {
 
             if (fileType == "image") {
                 var img = new Image();
-                img.src = 'images/' + filePath;
+                img.src = 'http://mboulette.16mb.com/images/' + filePath;
 
                 img.onload = function() {
                     self.loaded++;
@@ -48,7 +48,7 @@ class Assets {
             }
 
             if (fileType == "sound") {
-                var soundPath = 'https://raw.githubusercontent.com/mboulette/mariomaze/master/public_html/';
+                var soundPath = 'http://mboulette.16mb.com/sounds/';
 
                 var request = new XMLHttpRequest();
                 request.open('GET', soundPath + 'sounds/' + filePath, true);
