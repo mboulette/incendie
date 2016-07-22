@@ -1,4 +1,22 @@
 
+Number.prototype.between = function(a, b) {
+    var min = Math.min.apply(Math, [a, b]),
+    max = Math.max.apply(Math, [a, b]);
+    return this >= min && this <= max;
+};
+
+String.prototype.substitute = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
+
+String.prototype.lpad = function(padstr, length) {
+    var str = this;           
+    while (str.length < length) str = padstr + str;
+    return str;
+}
+
+
 class Assets {
     
     constructor() {
@@ -197,6 +215,48 @@ class Tiles extends Sprites {
 
     }
 
+    hit(bound, left, right, top, bottom) {
+
+        return !(
+            bound.left > right ||
+            bound.right < left ||
+            bound.top > bottom ||
+            bound.bottom < top 
+        );
+
+    }
+
+    collision(bound) {
+        
+        for (var i = 0; i < this.bounds.length; i++) {
+
+            var left = this.current.x - this.bounds[i].left;
+            var right = this.current.x + this.width + this.bounds[i].left + this.bounds[i].right;
+
+            var top = this.current.y - this.bounds[i].top;
+            var bottom = this.current.y + this.height + this.bounds[i].top + this.bounds[i].bottom;
+
+            //console.log('bound', left, right, top, bottom);
+            //console.log('coor', coor.x, coor.y)
+
+            /*
+            if (coor.x.between(left, right) && coor.y.between(top, bottom)) {
+                console.log('col');
+
+
+                return true;
+            }
+            */
+
+            if (this.hit(bound, left, right, top, bottom)) {
+                return true;
+            }
+
+        }
+
+        return false;
+    }
+
     drawBounds() {
         for (var i = 0; i < this.bounds.length; i++) {
             this.bounds[i].draw(this.current.x, this.current.y, this.width, this.height);
@@ -301,7 +361,36 @@ class Fireman {
 
     }
 
+    bounds() {
+        return {
+            'left' : this.current.x + 20,
+            'right' : this.current.x + 44,
+            'top' : this.current.y + 30,
+            'bottom' : this.current.y + 60
+        };
+    }
+
+    collision() {
+        for (var i = 0; i < map.walls.length; i++) {
+            if (map.walls[i].collision(this.bounds())) {
+                return true;
+            }
+        }
+
+        for (var i = 0; i < map.specials.length; i++) {
+            if (map.specials[i].collision(this.bounds())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     move(delta) {
+
+        var current_x = this.current.x;
+        var current_y = this.current.y;
+
         switch(this.current.direction) {
             case 'left':
                 this.current.x -= delta/10;
@@ -316,6 +405,12 @@ class Fireman {
                 this.current.y += delta/10;
                 break;
         }
+
+        if (this.current.direction != 'none' && this.collision()) {
+            this.current.x = current_x;
+            this.current.y = current_y;
+        }
+
     }
 
     update(delta) {
@@ -330,6 +425,14 @@ class Fireman {
         ctx.font = "8px Arial";
         ctx.textAlign = "center";
         ctx.fillText(this.current.name, this.current.x + 32, this.current.y);
+
+        if (draw_bound) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
+            ctx.rect(this.current.x+20, this.current.y+30, 24, 30);
+            ctx.stroke();            
+        }
+
     }
 
 }

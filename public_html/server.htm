@@ -9,7 +9,9 @@
 
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
+    <script src="javascript/jsonpack.js"></script>
     <script src="javascript/tiles.js"></script>
+    <script src="javascript/map.js"></script>
     <script>
 
         var peer;
@@ -71,12 +73,31 @@
             }
         }
 
+        
+        var move_viewport = function(now) {
+
+            var x = Math.round((board.width/2) - players[0].current.x - 32);
+            var y = Math.round((board.height/2) - players[0].current.y - 32);
+
+            x = Math.min(x, 0);
+            y = Math.min(y, 0);
+
+            x = Math.max(x, Math.round(board.width - map.width));
+            y = Math.max(y, Math.round(board.height - map.height));
+
+            ctx.translate(x, y);
+
+        }
+
         var main = function(now) {
 
             ctx.save();
             ctx.clearRect(0, 0, board.width, board.height);
-            ctx.translate((board.width/2) - players[0].current.x - 32, (board.height/2) - players[0].current.y - 32);
+            
+            move_viewport();
+            
 
+            map.draw();
             for (var i = 0; i < players.length; i++) {
                 players[i].update(now-timer_delta);
                 players[i].draw();
@@ -104,7 +125,7 @@
         }
 
         $( document ).on('AssetLoad', function(e, current, total){
-            if (current == total) {
+            if (current == total && players.length > 0) {
                 main();
             }
         });
