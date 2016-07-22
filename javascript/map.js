@@ -111,9 +111,10 @@ class Map {
 
 }
 
-
+/*
 $(document).ready(function() {
 
 	map = new Map('https://raw.githubusercontent.com/mboulette/incendie/master/public_html/maps/map1.map');
 
 });
+*/

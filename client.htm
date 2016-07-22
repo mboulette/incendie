@@ -9,7 +9,9 @@
 
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
+    <script src="javascript/jsonpack.js"></script>
     <script src="javascript/tiles.js"></script>
+    <script src="javascript/map.js"></script>
     <script>
 
         var peer;
@@ -60,6 +62,21 @@
             }
         }
 
+        var move_viewport = function(player) {
+
+            var x = Math.round((board.width/2) - players[player].current.x - 32);
+            var y = Math.round((board.height/2) - players[player].current.y - 32);
+
+            x = Math.min(x, 0);
+            y = Math.min(y, 0);
+
+            x = Math.max(x, Math.round(board.width - map.width));
+            y = Math.max(y, Math.round(board.height - map.height));
+
+            ctx.translate(x, y);
+
+        }
+
         var main = function(now) {
 
             ctx.save();
@@ -67,11 +84,12 @@
 
             for (var i = 0; i < players.length; i++) {
                 if (players[i].current.id == peer.connections[peer_server_name][0].id) {
-                    ctx.translate((board.width/2) - players[i].current.x - 32, (board.height/2) - players[i].current.y - 32);
+                    move_viewport(i);
                     change_direction(players[i].current);
                     break;
                 }
             }
+            map.draw();
 
             for (var i = 0; i < players.length; i++) {
                 players[i].update(now-timer);
@@ -84,7 +102,8 @@
         };
 
         $( document ).on('AssetLoad', function(e, current, total){
-            if (current == total) {
+            console.log(current, players.length, map);
+            if (current == total && players.length > 0 && map) {
                 main();
             }
         });
@@ -105,6 +124,10 @@
             });
 
             $('#input_player_name').val('#'+Math.floor(Math.random()*16777215).toString(16));
+
+            $(document).on('peer.load_map', function(e, data){
+                map = new Map('https://raw.githubusercontent.com/mboulette/incendie/master/public_html/' + data.map);
+            });
 
             $(document).on('peer.upd_players', function(e, data){
                 //console.log('Mis à jour des joueurs:', data);
@@ -136,6 +159,8 @@
 
                     $('#form_peer_connect').hide();
                     $('#game_canvas').show();
+
+                    peer_send({'action' : 'client_ready', 'connection' : this.provider.id});
 
                     console.log('Connexion établi avec le serveur ', conn);
                 });

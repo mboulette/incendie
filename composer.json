@@ -1,0 +1,11 @@
+{
+    "name": "mboulette/incendie",
+    "description": "Petit jeux en HTML5 Canvas, dont le but est de travailler en équipe pour éteindre un incendie et sauver les victimes du sinistre.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Miguel Boulette",
+            "email": "sombre_23@hotmail.com"
+        }
+    ]
+}

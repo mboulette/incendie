@@ -17,6 +17,7 @@
         var peer;
         var peer_server_name;
         var peer_player_name;
+        var map_file;
        
         var timer_delta = performance.now();
         var timer_upd_client = performance.now();
@@ -74,7 +75,7 @@
         }
 
         
-        var move_viewport = function(now) {
+        var move_viewport = function() {
 
             var x = Math.round((board.width/2) - players[0].current.x - 32);
             var y = Math.round((board.height/2) - players[0].current.y - 32);
@@ -145,6 +146,10 @@
             });
 
 
+            $(document).on('peer.client_ready', function(e, data){
+                peer.connections[data.connection][0].send({'action' : 'load_map', 'map' : map_file});
+            });
+
             $(document).on('peer.change_direction', function(e, data){
                 for (var i = 0; i < players.length; i++) {
                     if (players[i].current.id == data.id) {
@@ -158,6 +163,12 @@
 
 
             $(document).on('click', '#btnCreateSever', function(e){
+
+                peer_server_name = $('#input_server_name').val();
+                peer_player_name = $('#input_player_name').val();
+                map_file = $('#input_map_file').val();
+
+                map = new Map('https://raw.githubusercontent.com/mboulette/incendie/master/public_html/' + map_file);
 
                 peer_server_name = $('#input_server_name').val();
                 peer_player_name = $('#input_player_name').val();
@@ -230,6 +241,14 @@
 
     <div id="form_peer_connect">
         <label id='label_server'>Nom du serveur : <input id="input_server_name" value="test"></label><br>
+        <label>Carte :
+            <select id="input_map_file">
+                <option value="maps/map1.map">Map1</option>
+                <option value="maps/map2.map">Map2</option>
+            </select>
+        </label><br>
+
+
         <label>Votre nom : <input id="input_player_name" value="Miguel" ></label><br>
 
         <button id='btnCreateSever'>Créer un serveur</button>
