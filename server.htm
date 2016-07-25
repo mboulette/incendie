@@ -26,7 +26,7 @@
         var players = [];
         var keyboard = [];
         var players_colors = ['red', 'purple', 'green', 'blue', 'purple', 'green', 'bleu', 'purple', 'green', 'blue'];
-
+        var starting_point = {'red' : {'x':0,'y':0}, 'purple' : {'x':0,'y':0}, 'green' : {'x':0,'y':0}, 'blue' : {'x':0,'y':0}};
 
         var peer_send = function(data) {
             //console.log('Data envoyé', data);
@@ -168,7 +168,7 @@
                 peer_player_name = $('#input_player_name').val();
                 map_file = $('#input_map_file').val();
 
-                map = new Map('http://mboulette.16mb.com/' + map_file);
+                map = new Map(map_file);
 
                 peer_server_name = $('#input_server_name').val();
                 peer_player_name = $('#input_player_name').val();
@@ -179,9 +179,15 @@
                     $('#form_peer_connect').hide();
                     $('#game_canvas').show();
 
+                    /*
                     start_x = Math.floor((Math.random() * (ctx.canvas.width/2)) + 1);
                     start_y = Math.floor((Math.random() * (ctx.canvas.height/2)) + 1);
-                    players.push(new Fireman(id, peer_player_name, players_colors.shift(), start_x, start_y));
+                    */
+                    var color = players_colors.shift();
+                    var start_x = starting_point[color].x;
+                    var start_y = starting_point[color].y;
+
+                    players.push(new Fireman(id, peer_player_name, color, start_x, start_y));
 
                     console.log('Le serveur a été créé: ' + id);
 
@@ -190,10 +196,16 @@
                 peer.on('connection', function(conn) {
 
                     //console.log(conn);
-
+                    /*
                     start_x = Math.floor((Math.random() * (ctx.canvas.width/2)) + 1);
                     start_y = Math.floor((Math.random() * (ctx.canvas.height/2)) + 1);
-                    players.push(new Fireman(conn.id, conn.label, players_colors.shift(), start_x, start_y));
+                    */
+
+                    var color = players_colors.shift();
+                    var start_x = starting_point[color].x;
+                    var start_y = starting_point[color].y;
+
+                    players.push(new Fireman(conn.id, conn.label, color, start_x, start_y));
 
                     conn.on('data', function(data) {
                         data.id = this.id;

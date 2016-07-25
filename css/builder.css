@@ -1,3 +1,22 @@
 .tools {
     width:60px; height:40px; margin:2px;
 }
+
+.btn-starting {
+	width: 64px;
+	height: 64px;
+	background-image: url(http://mboulette.16mb.com/images/pompier.png);
+	background-position: 0 -4px;
+}
+
+.purple {
+	background-position: 0 -323px;
+}
+
+.green {
+	background-position: 0 -644px;
+}
+
+.blue {
+	background-position: 0 -963px;
+}

@@ -52,7 +52,6 @@
         <label><input type='checkbox' id='viewCoor' /> Coordonnées</label><br>
         <label><input type='checkbox' id='viewLayer' /> Transparents</label><br>
 
-
         <br />
 
         <button id="btnSave" style="width:100%">Save</button><br />
@@ -63,9 +62,20 @@
         <canvas width="2500" height="2500"></canvas>
     </div>
     <div style="clear:both;">&nbsp;</div>
-    <div style="width:100%; height:300px; border:1px solid #000; overflow:auto;">
+
+    <label><input id="optTuiles" name="radio_tuiles" type="radio" checked>Tuiles</label> &nbsp;
+    <label><input id="optAction" name="radio_tuiles" type="radio">Actions</label>
+    <div id="toolTuiles" style="width:100%; height:300px; border:1px solid #000; overflow:auto;">
         <img id="tiles" data-file="tilesheet_complete.png" src="images/tilesheet_complete.png">
     </div>
+
+    <div id="toolAction" style="width:100%; height:300px; border:1px solid #000; overflow:auto; padding:4px; display:none;">
+        <button class="btn-starting red" data-color="red">Départ Rouge</button>
+        <button class="btn-starting purple" data-color="purple">Départ Mauve</button> 
+        <button class="btn-starting green" data-color="green">Départ Vert</button> 
+        <button class="btn-starting blue" data-color="blue">Départ Bleu</button> 
+    </div>
+
 
 </body>
 </html>

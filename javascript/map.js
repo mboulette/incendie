@@ -49,6 +49,12 @@ class Map {
 	        contents.direction
 	    );
 
+	    if (contents.special) {
+	    	if (contents.special.action == 'starting-point') {
+	    		starting_point[contents.special.color] = {'x' : contents.current.x, 'y' : contents.current.y};
+	    	}
+	    }
+
 	    this.height = Math.max(this.height, (contents.current.y + contents.height) );
 	    this.width = Math.max(this.width, (contents.current.x + contents.width) );
 
@@ -73,7 +79,7 @@ class Map {
 	    }
 
 	    for (var i = 0; i < this.specials.length; i++) {
-	        this.specials[i].draw();
+	        //this.specials[i].draw();
 	        if (draw_bound) this.specials[i].drawBounds();
 	    }
 

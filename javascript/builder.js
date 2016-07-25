@@ -122,7 +122,7 @@ $(document).ready(function() {
     ctx = board.getContext('2d');
 
     assets.load('tilesheet_complete.png');
-
+    assets.load('pompier.png');
 
     $('canvas').on('mousedown', function(e){
         var rect = this.getBoundingClientRect();
@@ -151,6 +151,7 @@ $(document).ready(function() {
                     currentTile.height = object.height;
                     currentTile.rotation = object.rotation;
                     currentTile.direction = object.direction;
+                    currentTile.special = object.special;
 
                     copying = false;
                     return;
@@ -158,6 +159,13 @@ $(document).ready(function() {
 
             }
             return;
+        }
+
+        if (currentTile.special.action == 'starting-point') {
+            specials = specials.filter(function(object){
+                //console.log(object.special.action, 'starting-point', object.special.color, currentTile.special.color);
+                return !(object.special.action == 'starting-point' && object.special.color == currentTile.special.color);
+            });
         }
 
         for (var x = Math.min(start.x, currentTile.current.x); x <= Math.max(start.x, currentTile.current.x); x+=64) { 
@@ -188,8 +196,10 @@ $(document).ready(function() {
                 currentTile.rotation, 
                 currentTile.direction
             );
+            new_tile.special = currentTile.special;
 
-            if ($('#layers').val() == 'walls' || $('#layers').val() == 'specials')  new_tile.bounds.push(new Boundaries());
+            if ($('#layers').val() == 'walls')  new_tile.bounds.push(new Boundaries());
+            //if ($('#layers').val() == 'specials')  new_tile.bounds.push(new Boundaries());
 
             window[$('#layers').val()].push(new_tile);
         }
@@ -212,6 +222,7 @@ $(document).ready(function() {
         currentTile.y = Math.floor((e.clientY - rect.top) / 64) * 64;
         currentTile.rotation = 0;
         currentTile.direction = 'none';
+        currentTile.special = {'action' : ''};
 
         erasing = false;
         copying = false;
@@ -273,6 +284,38 @@ $(document).ready(function() {
         }
     });
 
+    $('#optTuiles').on('click', function(e){
+        $('#toolAction').hide();
+        $('#toolTuiles').show();
+    });
+
+    $('#optAction').on('click', function(e){
+        $('#toolAction').show();
+        $('#toolTuiles').hide();
+    });
+
+    $('.btn-starting').on('click', function(e){
+
+        var bg = $(this).css('background-image');
+        bg = bg.replace('url("','').replace('")','').split('/').pop();
+
+        var pos = $(this).css('backgroundPosition').split(" ");
+
+
+        $('#layers').val('specials');
+       
+        currentTile.filePath = bg;
+        currentTile.x = Math.abs(pos[0].replace('px',''));
+        currentTile.y = Math.abs(pos[1].replace('px',''));
+        currentTile.rotation = 0;
+        currentTile.direction = 'none';
+        currentTile.special = {'action' : 'starting-point', 'color': $(this).data('color')};
+
+        erasing = false;
+        copying = false;
+
+    });
+
     var saveData = (function () {
 
         var a = document.createElement("a");
@@ -306,6 +349,8 @@ $(document).ready(function() {
     function loadFile(contents) {
         var map = jsonpack.unpack(contents);
 
+        console.log(map);
+
         for (var i = 0; i < map.floors.length; i++) {
             loadTitle(floors, map.floors[i]);
         }
@@ -333,6 +378,9 @@ $(document).ready(function() {
             contents.rotation, 
             contents.direction
         );
+
+        new_tile.special = {'action' : ''};
+        if (contents.special) new_tile.special = contents.special;
 
         if (contents.bounds.length > 0) new_tile.bounds.push(new Boundaries());
         layer.push(new_tile);

@@ -144,6 +144,9 @@ class Sprites extends Pivotable {
     draw (x, y) {
         ctx.save();
         super.draw(x,y);
+
+        //console.log(this.filePath, this.x, this.y, this.width, this.height);
+
         ctx.drawImage(assets.files[this.filePath], this.x, this.y, this.width, this.height, x, y, this.width, this.height);
         ctx.restore();
     }
@@ -212,6 +215,7 @@ class Tiles extends Sprites {
         };
 
         this.bounds = [];
+        this.special = {};
 
     }
 
