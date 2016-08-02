@@ -11,6 +11,7 @@
     <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
     <script src="javascript/jsonpack.js"></script>
     <script src="javascript/tiles.js"></script>
+    <script src="maps/map1.js"></script>
     <script src="javascript/map.js"></script>
     <script>
 
@@ -26,7 +27,6 @@
         var players = [];
         var keyboard = [];
         var players_colors = ['red', 'purple', 'green', 'blue', 'purple', 'green', 'bleu', 'purple', 'green', 'blue'];
-        var starting_point = {'red' : {'x':0,'y':0}, 'purple' : {'x':0,'y':0}, 'green' : {'x':0,'y':0}, 'blue' : {'x':0,'y':0}};
 
         var peer_send = function(data) {
             //console.log('Data envoyé', data);
@@ -96,8 +96,12 @@
             ctx.clearRect(0, 0, board.width, board.height);
             
             move_viewport();
-            
 
+            for (var i = 0; i < map.specials.length; i++) {
+                map.specials[i].spread(now-timer_delta);
+            }
+
+            map.clean();
             map.draw();
             for (var i = 0; i < players.length; i++) {
                 players[i].update(now-timer_delta);
@@ -126,6 +130,7 @@
         }
 
         $( document ).on('AssetLoad', function(e, current, total){
+            //console.log(current, total, players.length);
             if (current == total && players.length > 0) {
                 main();
             }
@@ -190,6 +195,7 @@
                     players.push(new Fireman(id, peer_player_name, color, start_x, start_y));
 
                     console.log('Le serveur a été créé: ' + id);
+                    assets.test();
 
                 });
 

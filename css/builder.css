@@ -20,3 +20,18 @@
 .blue {
 	background-position: 0 -963px;
 }
+
+.btn-fireon {
+	width: 64px;
+	height: 64px;
+	background-image: url(http://mboulette.16mb.com/images/fire.png);
+	background-position: 0 0;
+}
+
+.small {
+	background-position: 0 -64px;
+}
+
+.medium {
+	background-position: 0 -128px;
+}

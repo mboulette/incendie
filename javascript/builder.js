@@ -123,6 +123,7 @@ $(document).ready(function() {
 
     assets.load('tilesheet_complete.png');
     assets.load('pompier.png');
+    assets.load('fire.png');
 
     $('canvas').on('mousedown', function(e){
         var rect = this.getBoundingClientRect();
@@ -163,7 +164,6 @@ $(document).ready(function() {
 
         if (currentTile.special.action == 'starting-point') {
             specials = specials.filter(function(object){
-                //console.log(object.special.action, 'starting-point', object.special.color, currentTile.special.color);
                 return !(object.special.action == 'starting-point' && object.special.color == currentTile.special.color);
             });
         }
@@ -241,9 +241,6 @@ $(document).ready(function() {
 
         var packed = jsonpack.pack(map);
 
-        
-        //window.open('data:text/json;charset=utf-8,' + JSON.stringify(map));
-
         filename = prompt("Nom du fichier", filename);
         if (filename) saveData(packed, filename);
     });
@@ -294,25 +291,26 @@ $(document).ready(function() {
         $('#toolTuiles').hide();
     });
 
-    $('.btn-starting').on('click', function(e){
+    $('.btn-starting, .btn-fireon').on('click', function(e){
+
+        $('#layers').val('specials');
+        erasing = false;
+        copying = false;
 
         var bg = $(this).css('background-image');
         bg = bg.replace('url("','').replace('")','').split('/').pop();
 
         var pos = $(this).css('backgroundPosition').split(" ");
-
-
-        $('#layers').val('specials');
        
         currentTile.filePath = bg;
         currentTile.x = Math.abs(pos[0].replace('px',''));
         currentTile.y = Math.abs(pos[1].replace('px',''));
         currentTile.rotation = 0;
         currentTile.direction = 'none';
-        currentTile.special = {'action' : 'starting-point', 'color': $(this).data('color')};
 
-        erasing = false;
-        copying = false;
+        if ($(this).hasClass('btn-starting')) currentTile.special = {'action' : 'starting-point', 'color': $(this).data('color')};
+        if ($(this).hasClass('btn-fireon')) currentTile.special = {'action' : 'fireon', 'size': $(this).data('size')};
+
 
     });
 

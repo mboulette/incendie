@@ -81,6 +81,10 @@ class Assets {
 
     }
 
+    test() {
+        $(document).trigger('AssetLoad', [this.loaded, Object.keys(this.files).length] );
+    }
+
     play(filePath) {
         var source = this.AudioCtx.createBufferSource();
         source.buffer = this.files[filePath].buffer;
@@ -144,9 +148,6 @@ class Sprites extends Pivotable {
     draw (x, y) {
         ctx.save();
         super.draw(x,y);
-
-        //console.log(this.filePath, this.x, this.y, this.width, this.height);
-
         ctx.drawImage(assets.files[this.filePath], this.x, this.y, this.width, this.height, x, y, this.width, this.height);
         ctx.restore();
     }
@@ -240,18 +241,6 @@ class Tiles extends Sprites {
             var top = this.current.y - this.bounds[i].top;
             var bottom = this.current.y + this.height + this.bounds[i].top + this.bounds[i].bottom;
 
-            //console.log('bound', left, right, top, bottom);
-            //console.log('coor', coor.x, coor.y)
-
-            /*
-            if (coor.x.between(left, right) && coor.y.between(top, bottom)) {
-                console.log('col');
-
-
-                return true;
-            }
-            */
-
             if (this.hit(bound, left, right, top, bottom)) {
                 return true;
             }
@@ -274,7 +263,7 @@ class Tiles extends Sprites {
 }
 
 class AnimatedSprites extends Pivotable {
-    constructor(filePath, framePosition = [{x: 0, y: 0}], frameRate = 200, width, height) {
+    constructor(filePath, framePosition = [{x: 0, y: 0}], frameRate = 200, width, height, startFrame = 0) {
         super(0, 0, width, height);
 
         this.filePath = filePath;
@@ -282,7 +271,7 @@ class AnimatedSprites extends Pivotable {
         this.frameRate = frameRate;
         this.timer = performance.now();
         this.sprites = [];
-        this.frame = 0;
+        this.frame = startFrame;
 
         for (var frame in this.framePosition) {
             this.sprites.push(new Sprites(this.filePath, this.framePosition[frame].x, this.framePosition[frame].y, this.width, this.height));
@@ -309,7 +298,7 @@ class AnimatedSprites extends Pivotable {
 
 
 class Animations extends AnimatedSprites {
-    constructor (filePath, y = 0, frameCount = 1, frameRate = 200, width = 64, height = 64) {
+    constructor (filePath, y = 0, frameCount = 1, frameRate = 200, width = 64, height = 64, startFrame = 0) {
         
         var framePosition = [];
 
@@ -317,16 +306,196 @@ class Animations extends AnimatedSprites {
             framePosition.push({'x': i * width, 'y': y});
         }
 
-        super(filePath, framePosition, frameRate, width, height);
+        super(filePath, framePosition, frameRate, width, height, startFrame);
+    }
+}
+
+class Fire {
+    constructor(size = 'small', currentX = 0, currentY = 0) {
+
+        this.remove = false;
+
+        this.current = {
+            'size' : size,
+            'x' : currentX,
+            'y' : currentY,
+        };
+
+        var frame = Math.floor(Math.random() * 4);
+
+        this.animations = {
+            'tiny' :    new Animations('fire.png', 0 * 64, 5, 100, 64, 64, frame),
+            'small' :   new Animations('fire.png', 1 * 64, 5, 100, 64, 64, frame),
+            'medium' :  new Animations('fire.png', 2 * 64, 5, 100, 64, 64, frame),
+            'large' :   new Animations('fire.png', 3 * 64, 5, 100, 64, 128, frame),
+            'x-large' : new Animations('fire.png', 5 * 64, 5, 100, 64, 128, frame),
+        }
+    }
+
+    /*
+    bounds() {
+        return {
+            'left' : this.current.x - 5,
+            'right' : this.current.x + 64 + 5,
+            'top' : this.current.y - 5,
+            'bottom' : this.current.y + 64 + 5
+        };
+    }
+    */
+    bounds() {
+        return {
+            'left' : this.current.x + 5,
+            'right' : this.current.x + 64 - 5,
+            'top' : this.current.y + 5,
+            'bottom' : this.current.y + 64 - 5
+        };
+    }
+
+
+    spread(delta) {
+        delta = delta / 10;
+        var nb_collisions = 0;
+
+        for (var i = 0; i < map.walls.length; i++) {
+            if (map.walls[i].collision(this.bounds())) {
+
+                nb_collisions++;
+                map.walls[i].burn(delta);
+                break;
+                /*
+                switch (this.current.size) {
+                    case 'tiny' :
+                        map.walls[i].burn(1*delta);
+                        break
+                    case 'small' :
+                        map.walls[i].burn(2*delta);
+                        break;
+                    case 'medium' :
+                        map.walls[i].burn(4*delta);
+                        break;
+                    case 'large' :
+                        map.walls[i].burn(8*delta);
+                        break;
+                    case 'x-large' :
+                        map.walls[i].burn(12*delta);
+                        break;
+
+                }
+                */
+
+            }
+        }
+
+        if (nb_collisions == 0) {
+            this.remove = true
+        }
+
+    }
+
+    draw() {
+        var x = this.current.x;
+        var y = this.current.y;
+
+        if (this.current.size == 'large' || this.current.size == 'x-large') {
+            y -= 64;
+        }
+        this.animations[this.current.size].draw(x, y);
+        this.animations[this.current.size].update();
+    }
+
+    collision(bound) {
+        return false;
+    }
+
+}
+
+class BurningTile extends Tiles {
+    
+    constructor(filePath, maskX=0, maskY=0, currentX=0, currentY=0, width=64, height=64, rotation=0, flip='none') {
+        super(filePath, maskX, maskY, currentX, currentY, width, height, rotation, flip);
+
+        this.inflammability = 1;
+        this.heatproof = 1
+        this.heat = 0;
+        this.current.burned = 0;
+
+        this.sprites = [
+            new Sprites ('fire.png', 0 * 64, 7 * 64, 64, 64),
+            new Sprites ('fire.png', 1 * 64, 7 * 64, 64, 64),
+            new Sprites ('fire.png', 2 * 64, 7 * 64, 64, 64)
+        ];
+    }
+
+    draw(furniture = false) {
+        if (furniture) {
+            switch (this.current.burned) {
+                case 0 :
+                    super.draw();
+                    break
+                case 1 :
+                    super.draw();
+                    this.sprites[0].draw(this.current.x, this.current.y);
+                    break;
+                case 2 :
+                    this.sprites[0].draw(this.current.x, this.current.y);
+                    break;
+                default :
+                    break;
+            }
+
+        } else {
+            switch (this.current.burned) {
+                case 0 :
+                    super.draw();
+                    break
+                case 1 :
+                    super.draw();
+                    this.sprites[0].draw(this.current.x, this.current.y);
+                    break;
+                case 2 :
+                    super.draw();
+                    this.sprites[1].draw(this.current.x, this.current.y);
+                    break;
+                default :
+                    this.sprites[2].draw(this.current.x, this.current.y);
+                    break;
+            }
+        }
+    }
+
+    ignite(inflammability, heatproof, heat, burned) {
+        this.inflammability = inflammability;
+        this.heatproof = heatproof;
+        this.heat = heat;
+        this.current.burned = burned;
+
+        return this;
+    }
+
+    burn(heat) {
+        var taux = Math.floor(Math.random() * 1000) + 1;
+
+        //console.log(this.inflammability * heat, taux);
+        if (this.inflammability * heat >= taux) {
+            //console.log(this.inflammability * heat, taux);
+            this.current.burned++;
+        }
+
+        return Math.round(this.burned / this.heatproof);
+    }
+
+    collision(bound) {
+        if (this.current.burned > 3) {
+            return false;
+        } else {
+            return super.collision(bound);
+        }
     }
 }
 
 class Fireman {
 
     constructor(conn_id = '', name = 'Fireman', color = 'red', currentX = 0, currentY = 0, direction = 'none') {
-
-        this.frameRate = 50;
-        this.timer = performance.now();
 
         this.current = {
             'id' : conn_id,
