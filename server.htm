@@ -19,6 +19,7 @@
         var peer_server_name;
         var peer_player_name;
         var map_file;
+        var burnning_speed = 6;
        
         var timer_delta = performance.now();
         var timer_upd_client = performance.now();
@@ -38,6 +39,8 @@
         }
 
         var change_direction = function(player) {
+            player.action = 'none';
+
             if (keyboard[37]) {
                 if (player.direction != 'left') {
                     player.direction = 'left';
@@ -67,11 +70,16 @@
                 return;
             }
 
+            if (keyboard[32]) {
+                player.action = 'soak';
+            }
+
             if (player.direction != 'none') {
                 player.direction = 'none';
                 upd_players();
                 return;
             }
+
         }
 
         

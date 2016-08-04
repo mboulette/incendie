@@ -30,16 +30,16 @@ class Map {
 			var map = jsonpack.unpack(contents);
 
 			for (var i = 0; i < map.floors.length; i++) {
-				self.loadTitle(self.floors, map.floors[i]);
+				self.loadTitle('floors', self.floors, map.floors[i]);
 			}
 			for (var i = 0; i < map.walls.length; i++) {
-				self.loadTitle(self.walls, map.walls[i]);
+				self.loadTitle('walls', self.walls, map.walls[i]);
 			}
 			for (var i = 0; i < map.furnitures.length; i++) {
-				self.loadTitle(self.furnitures, map.furnitures[i]);
+				self.loadTitle('furnitures', self.furnitures, map.furnitures[i]);
 			}
 			for (var i = 0; i < map.specials.length; i++) {
-				self.loadTitle(self.specials, map.specials[i]);
+				self.loadTitle('specials', self.specials, map.specials[i]);
 			}
 		});    	
     }
@@ -49,20 +49,20 @@ class Map {
 			var map = jsonpack.unpack(map_content);
 
 			for (var i = 0; i < map.floors.length; i++) {
-				self.loadTitle(self.floors, map.floors[i]);
+				self.loadTitle('floors', self.floors, map.floors[i]);
 			}
 			for (var i = 0; i < map.walls.length; i++) {
-				self.loadTitle(self.walls, map.walls[i]);
+				self.loadTitle('walls', self.walls, map.walls[i]);
 			}
 			for (var i = 0; i < map.furnitures.length; i++) {
-				self.loadTitle(self.furnitures, map.furnitures[i]);
+				self.loadTitle('furnitures', self.furnitures, map.furnitures[i]);
 			}
 			for (var i = 0; i < map.specials.length; i++) {
-				self.loadTitle(self.specials, map.specials[i]);
+				self.loadTitle('specials', self.specials, map.specials[i]);
 			}  	
     }
 
-	loadTitle(layer, contents) {
+	loadTitle(layer_name, layer, contents) {
 
 	    if (contents.special && contents.special.action != '') {
 	    	if (contents.special.action == 'starting-point') {
@@ -87,7 +87,15 @@ class Map {
 				contents.height, 
 				contents.rotation, 
 				contents.direction
-			).ignite(1,	5, 0, 0);
+			);
+
+			//(inflammability, heatproof, heat, burned, inflamed)
+			// enflamme : inflammability * heat
+			// brule : inflamed / heatproof
+			if (layer_name == 'walls') new_tile.ignite(10, 10, 10, 0, 0);
+			if (layer_name == 'furnitures') new_tile.ignite(20, 1, 10, 0, 0);
+			if (layer_name == 'floors') new_tile.ignite(2, 1, 1, 0, 0);
+
 
 			if (contents.bounds.length > 0) new_tile.bounds.push(new Boundaries());
 

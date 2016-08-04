@@ -143,12 +143,19 @@ class Sprites extends Pivotable {
         super(x, y, width, height);
         this.filePath = filePath;
         assets.load(this.filePath);
+        this.highlight = 0;
     }
 
     draw (x, y) {
         ctx.save();
         super.draw(x,y);
         ctx.drawImage(assets.files[this.filePath], this.x, this.y, this.width, this.height, x, y, this.width, this.height);
+
+        if (this.highlight == 1){
+            var bound = new Boundaries();
+            bound.draw(x, y, this.width, this.height);
+        }
+
         ctx.restore();
     }
 
@@ -241,9 +248,7 @@ class Tiles extends Sprites {
             var top = this.current.y - this.bounds[i].top;
             var bottom = this.current.y + this.height + this.bounds[i].top + this.bounds[i].bottom;
 
-            if (this.hit(bound, left, right, top, bottom)) {
-                return true;
-            }
+            return this.hit(bound, left, right, top, bottom);
 
         }
 
@@ -332,16 +337,6 @@ class Fire {
         }
     }
 
-    /*
-    bounds() {
-        return {
-            'left' : this.current.x - 5,
-            'right' : this.current.x + 64 + 5,
-            'top' : this.current.y - 5,
-            'bottom' : this.current.y + 64 + 5
-        };
-    }
-    */
     bounds() {
         return {
             'left' : this.current.x + 5,
@@ -355,52 +350,77 @@ class Fire {
     spread(delta) {
         delta = delta / 10;
         var nb_collisions = 0;
+        var current_inflamed = 0;
+        var map_tiles = map.walls.concat(map.floors, map.furnitures);
 
-        for (var i = 0; i < map.walls.length; i++) {
-            if (map.walls[i].collision(this.bounds())) {
+
+        for (var i = 0; i < map_tiles.length; i++) {
+            if (map_tiles[i].intersecte(this.bounds())) {
 
                 nb_collisions++;
-                map.walls[i].burn(delta);
-                break;
-                /*
-                switch (this.current.size) {
-                    case 'tiny' :
-                        map.walls[i].burn(1*delta);
-                        break
-                    case 'small' :
-                        map.walls[i].burn(2*delta);
-                        break;
-                    case 'medium' :
-                        map.walls[i].burn(4*delta);
-                        break;
-                    case 'large' :
-                        map.walls[i].burn(8*delta);
-                        break;
-                    case 'x-large' :
-                        map.walls[i].burn(12*delta);
-                        break;
+                map_tiles[i].burn(delta);
 
-                }
-                */
+                if (map_tiles[i].current.inflamed <= 0) this.current.size = 'tiny';
+                if (map_tiles[i].current.inflamed > 0) this.current.size = 'small';
+                if (map_tiles[i].current.inflamed > 2) this.current.size = 'medium';
+                if (map_tiles[i].current.inflamed > 4) this.current.size = 'large';
+                if (map_tiles[i].current.inflamed > 6) this.current.size = 'x-large';
+
+                current_inflamed = map_tiles[i].current.inflamed;
+
+                break;
 
             }
         }
 
         if (nb_collisions == 0) {
-            this.remove = true
+            this.remove = true;
         }
+
+        //return;
+
+        var centerX = this.current.x + (this.width / 2);
+        var centerY = this.current.y + (this.height / 2);       
+        var adjacents = [];
+
+        //trouver toutes les cases adjacente
+        for (var i = 0; i < map_tiles.length; i++) {
+
+            if (map_tiles[i].current.alight == 0) {
+                
+                if (map_tiles[i].intersecte( { 'left' : this.current.x - 59, 'right' : this.current.x + 64 + 59, 'top' : this.current.y - 59, 'bottom' : this.current.y + 64 + 59}  )) {
+                    adjacents.push(map_tiles[i]);
+                    //map.walls[i].highlight = 1;
+                }
+
+            }
+
+        }
+
+        for (var i = 0; i < adjacents.length; i++) {
+            var taux = Math.floor(Math.random() * (burnning_speed * 4000) * delta) + 1;
+
+            if (adjacents[i].inflammability * current_inflamed >= taux) {
+                map.specials.push( new Fire('tiny', adjacents[i].current.x, adjacents[i].current.y) );
+                adjacents[i].current.alight = 1;
+            }
+
+        }
+       
 
     }
 
     draw() {
-        var x = this.current.x;
-        var y = this.current.y;
+        if (this.remove != true) {
+            var x = this.current.x;
+            var y = this.current.y;
 
-        if (this.current.size == 'large' || this.current.size == 'x-large') {
-            y -= 64;
+            if (this.current.size == 'large' || this.current.size == 'x-large') {
+                y -= 64;
+            }
+            this.animations[this.current.size].draw(x, y);
+            this.animations[this.current.size].update();
         }
-        this.animations[this.current.size].draw(x, y);
-        this.animations[this.current.size].update();
     }
 
     collision(bound) {
@@ -414,10 +434,12 @@ class BurningTile extends Tiles {
     constructor(filePath, maskX=0, maskY=0, currentX=0, currentY=0, width=64, height=64, rotation=0, flip='none') {
         super(filePath, maskX, maskY, currentX, currentY, width, height, rotation, flip);
 
-        this.inflammability = 1;
-        this.heatproof = 1
+        this.inflammability = 0;
+        this.heatproof = 0
         this.heat = 0;
         this.current.burned = 0;
+        this.current.inflamed = 0;
+        this.current.alight = 0;
 
         this.sprites = [
             new Sprites ('fire.png', 0 * 64, 7 * 64, 64, 64),
@@ -463,29 +485,48 @@ class BurningTile extends Tiles {
         }
     }
 
-    ignite(inflammability, heatproof, heat, burned) {
+    ignite(inflammability, heatproof, heat, burned, inflamed) {
         this.inflammability = inflammability;
         this.heatproof = heatproof;
         this.heat = heat;
         this.current.burned = burned;
+        this.current.inflamed = inflamed;
 
         return this;
     }
 
-    burn(heat) {
-        var taux = Math.floor(Math.random() * 1000) + 1;
+    burn(delta) {
+        var taux = Math.floor(Math.random() * (burnning_speed * 1000) * delta) + 1;
 
-        //console.log(this.inflammability * heat, taux);
-        if (this.inflammability * heat >= taux) {
-            //console.log(this.inflammability * heat, taux);
+        if (this.inflammability * this.heat >= taux) {
+            if (this.current.burned > 3) {
+                this.current.inflamed--;
+            } else {
+                this.current.inflamed++;
+            }
+        }
+
+        if (this.current.inflamed / this.heatproof >= taux) {
             this.current.burned++;
         }
 
-        return Math.round(this.burned / this.heatproof);
+    }
+
+    intersecte(bound) {
+        if (this.current.burned > 3 && this.current.inflamed < 1) {
+            return false;
+        } else {
+            return !(
+                bound.left > (this.current.x + this.width) ||
+                bound.right < (this.current.x) ||
+                bound.top > (this.current.y + this.height) ||
+                bound.bottom < (this.current.y) 
+            );
+        }
     }
 
     collision(bound) {
-        if (this.current.burned > 3) {
+        if (this.current.burned > 3 && this.current.inflamed < 1) {
             return false;
         } else {
             return super.collision(bound);
@@ -503,7 +544,9 @@ class Fireman {
             'x' : currentX,
             'y' : currentY,
             'direction' : direction,
-            'color' : color
+            'color' : color,
+            'last' : direction,
+            'action' : 'none',
         };
 
         this.animations = {
@@ -543,6 +586,23 @@ class Fireman {
         };
     }
 
+    boundsSoak() {
+
+        var x = this.current.x + 32;
+        var y = this.current.y + 32;
+        if (this.current.last == 'left') x -= 40;
+        if (this.current.last == 'right') x += 40;
+        if (this.current.last == 'up') y -= 40;
+        if (this.current.last == 'down') y += 40;
+
+        return {
+            'left' : x - 10,
+            'right' : x + 10,
+            'top' : y - 10,
+            'bottom' : y + 10
+        };
+    }
+
     collision() {
         for (var i = 0; i < map.walls.length; i++) {
             if (map.walls[i].collision(this.bounds())) {
@@ -579,6 +639,8 @@ class Fireman {
                 break;
         }
 
+        if (this.current.direction != 'none') this.current.last = this.current.direction;
+
         if (this.current.direction != 'none' && this.collision()) {
             this.current.x = current_x;
             this.current.y = current_y;
@@ -589,11 +651,52 @@ class Fireman {
     update(delta) {
         this.move(delta);
         this.animations[this.current.direction+'-'+this.current.color].update();
+
+        if (this.current.action == 'soak') this.updateSoak(delta);
+
+    }
+
+    drawSoak() {
+        /*
+        var x = this.current.left + 32;
+        var y = this.current.y + 32;
+        if (this.current.last == 'left') x -= 40;
+        if (this.current.last == 'right') x += 40;
+        if (this.current.last == 'up') y -= 40;
+        if (this.current.last == 'down') y += 40;
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0, 0, 255, 1)';
+        ctx.arc(x, y, 10, 0, 2*Math.PI);
+        ctx.stroke();
+        */
+
+        var bound = this.boundsSoak();
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0, 0, 255, 1)';
+        ctx.rect(bound.left, bound.top, bound.right - bound.left, bound.bottom - bound.top);
+        ctx.stroke();  
+    }
+
+    updateSoak(delta) {
+
+        var map_tiles = map.walls.concat(map.floors, map.furnitures);
+
+        for (var i = 0; i < map_tiles.length; i++) {
+            if (map_tiles[i].intersecte(this.boundsSoak())) {
+                //console.log(map_tiles[i].current.inflamed );
+                
+                if (map_tiles[i].current.inflamed > 10) map_tiles[i].current.inflamed = map_tiles[i].current.inflamed / 2;
+                if (map_tiles[i].current.inflamed > 0) map_tiles[i].current.inflamed -= (delta/100);
+                //map_tiles[i].highlight = 1;
+            }
+        }
+
     }
 
     draw() {
 
-        this.animations[this.current.direction+'-'+this.current.color].draw(this.current.x, this.current.y);
+        this.animations[this.current.last+'-'+this.current.color].draw(this.current.x, this.current.y);
 
         ctx.font = "8px Arial";
         ctx.textAlign = "center";
@@ -605,6 +708,8 @@ class Fireman {
             ctx.rect(this.current.x+20, this.current.y+30, 24, 30);
             ctx.stroke();            
         }
+
+        if (this.current.action == 'soak') this.drawSoak();
 
     }
 
