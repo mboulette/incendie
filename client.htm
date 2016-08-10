@@ -35,30 +35,52 @@
         }
 
         var change_direction = function(player) {
+            player.action = 'none';
+
             if (keyboard[37]) {
-                if (player.direction != 'left') peer_send({'action' : 'change_direction', 'direction' : 'left' });
-                player.direction = 'left';
-                return;
+                if (player.direction != 'left') {
+                    player.direction = 'left';                   
+                    peer_send({'action' : 'change_direction', 'current' : player });
+                    return;
+                }
             }
+
             if (keyboard[38]) {
-                if (player.direction != 'up') peer_send({'action' : 'change_direction', 'direction' : 'up' });
-                player.direction = 'up';
-                return;
+                if (player.direction != 'up') {
+                    player.direction = 'up';                   
+                    peer_send({'action' : 'change_direction', 'current' : player });
+                    return;
+                }
             }
+
             if (keyboard[39]) {
-                if (player.direction != 'right') peer_send({'action' : 'change_direction', 'direction' : 'right' });
-                player.direction = 'right';
-                return;
+                if (player.direction != 'right') {
+                    player.direction = 'right';                   
+                    peer_send({'action' : 'change_direction', 'current' : player });
+                    return;
+                }
             }
+
             if (keyboard[40]) {
-                if (player.direction != 'down') peer_send({'action' : 'change_direction', 'direction' : 'down' });
-                player.direction = 'down';
+                if (player.direction != 'down') {
+                    player.direction = 'down';                   
+                    peer_send({'action' : 'change_direction', 'current' : player });
+                    return;
+                }
+            }
+
+
+            if (keyboard[32]) {
+                if (player.action != 'soak') {
+                    player.action = 'soak';
+                    peer_send({'action' : 'change_direction', 'current' : player });
+                }
                 return;
             }
 
             if (player.direction != 'none') {
                 player.direction = 'none';
-                peer_send({'action' : 'change_direction', 'direction' : 'none' });
+                peer_send({'action' : 'change_direction', 'current' : player });
                 return;
             }
         }
@@ -103,7 +125,7 @@
         };
 
         $( document ).on('AssetLoad', function(e, current, total){
-            console.log(current, total, players.length, map);
+            //console.log(current, total, players.length, map);
             if (current == total && map) {
                 main();
             }
@@ -145,6 +167,27 @@
                 for (var i = 0; i < data.players.length; i++) {
                     //console.log(data.players[i]);
                     players[i].current = data.players[i];
+                }
+
+            });
+
+            $(document).on('peer.upd_remote_maps', function(e, data){
+
+                for (var i = 0; i < data.floors.length; i++) {
+                    map.floors[i].current = data.floors[i];
+                }
+                for (var i = 0; i < data.walls.length; i++) {
+                    map.walls[i].current = data.walls[i];
+                }
+                for (var i = 0; i < data.furnitures.length; i++) {
+                    map.furnitures[i].current = data.furnitures[i];
+                }
+                
+
+                map.specials = [];
+
+                for (var i = 0; i < data.fires.length; i++) {
+                    map.specials.push(new SimplifiedFire(data.fires[i].size, data.fires[i].x, data.fires[i].y));
                 }
 
             });

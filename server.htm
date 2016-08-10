@@ -19,7 +19,7 @@
         var peer_server_name;
         var peer_player_name;
         var map_file;
-        var burnning_speed = 6;
+        var burnning_speed = 20;
        
         var timer_delta = performance.now();
         var timer_upd_client = performance.now();
@@ -109,18 +109,19 @@
                 map.specials[i].spread(now-timer_delta);
             }
 
-            map.clean();
             map.draw();
             for (var i = 0; i < players.length; i++) {
                 players[i].update(now-timer_delta);
                 players[i].draw();
             }
+            map.clean();
 
             change_direction(players[0].current);
 
             if (performance.now() - timer_upd_client > 1000) {
                 timer_upd_client = performance.now();
                 upd_players();
+                upd_remote_maps();
             }
 
             ctx.restore();
@@ -136,6 +137,30 @@
 
             peer_send({'action' : 'upd_players', 'players' : player_current});
         }
+
+         var upd_remote_maps = function() {
+
+            var floors = [];
+            var walls = [];
+            var furnitures = [];
+            var fires = [];
+
+            for (var i = 0; i < map.floors.length; i++) {
+                floors.push(map.floors[i].current);
+            }
+            for (var i = 0; i < map.walls.length; i++) {
+                walls.push(map.walls[i].current);
+            }
+            for (var i = 0; i < map.furnitures.length; i++) {
+                furnitures.push(map.furnitures[i].current);
+            }
+
+            for (var i = 0; i < map.specials.length; i++) {
+                fires.push(map.specials[i].current);
+            }
+
+            peer_send({'action' : 'upd_remote_maps', 'floors' : floors, 'walls' : walls, 'furnitures' : furnitures, 'fires' : fires});
+        }       
 
         $( document ).on('AssetLoad', function(e, current, total){
             //console.log(current, total, players.length);
@@ -167,7 +192,7 @@
                 for (var i = 0; i < players.length; i++) {
                     if (players[i].current.id == data.id) {
 
-                        players[i].current.direction = data.direction; 
+                        players[i].current = data.current; 
                         upd_players();
                         break;
                     }

@@ -315,6 +315,43 @@ class Animations extends AnimatedSprites {
     }
 }
 
+
+class SimplifiedFire {
+    constructor(size = 'small', currentX = 0, currentY = 0) {
+        this.current = {
+            'size' : size,
+            'x' : currentX,
+            'y' : currentY,
+        };
+
+        var frame = Math.floor(Math.random() * 4);
+
+        this.animations = {
+            'tiny' :    new Animations('fire.png', 0 * 64, 5, 100, 64, 64, frame),
+            'small' :   new Animations('fire.png', 1 * 64, 5, 100, 64, 64, frame),
+            'medium' :  new Animations('fire.png', 2 * 64, 5, 100, 64, 64, frame),
+            'large' :   new Animations('fire.png', 3 * 64, 5, 100, 64, 128, frame),
+            'x-large' : new Animations('fire.png', 5 * 64, 5, 100, 64, 128, frame),
+        }
+    }
+
+    draw() {
+        var x = this.current.x;
+        var y = this.current.y;
+
+        if (this.current.size == 'large' || this.current.size == 'x-large') {
+            y -= 64;
+        }
+        this.animations[this.current.size].draw(x, y);
+        this.animations[this.current.size].update();
+    }
+
+    collision(bound) {
+        return false;
+    }
+
+}
+
 class Fire {
     constructor(size = 'small', currentX = 0, currentY = 0) {
 
@@ -349,13 +386,28 @@ class Fire {
 
     spread(delta) {
         delta = delta / 10;
+
+        this.friend.burn(delta);
+        if (this.friend.current.inflamed == 0) this.current.size = 'tiny';
+        if (this.friend.current.inflamed > 0) this.current.size = 'small';
+        if (this.friend.current.inflamed > 2) this.current.size = 'medium';
+        if (this.friend.current.inflamed > 4) this.current.size = 'large';
+        if (this.friend.current.inflamed > 6) this.current.size = 'x-large';
+
+        if (this.friend.current.inflamed < 0) {
+            this.friend.current.inflamed = 0;
+            this.remove = true;
+            return;
+        }
+
+        /*
         var nb_collisions = 0;
         var current_inflamed = 0;
         var map_tiles = map.walls.concat(map.floors, map.furnitures);
 
 
         for (var i = 0; i < map_tiles.length; i++) {
-            if (map_tiles[i].intersecte(this.bounds())) {
+            if (map_tiles[i].intersecte(this.bounds()) && map_tiles[i].current.inflamed >= 0 ) {
 
                 nb_collisions++;
                 map_tiles[i].burn(delta);
@@ -367,21 +419,24 @@ class Fire {
                 if (map_tiles[i].current.inflamed > 6) this.current.size = 'x-large';
 
                 current_inflamed = map_tiles[i].current.inflamed;
+                map_tiles[i].current.alight == 1;
 
                 break;
-
             }
         }
 
         if (nb_collisions == 0) {
             this.remove = true;
+            console.log(map.specials);
+            return;
         }
-
-        //return;
+        */
+        
 
         var centerX = this.current.x + (this.width / 2);
         var centerY = this.current.y + (this.height / 2);       
         var adjacents = [];
+        var map_tiles = map.walls.concat(map.floors, map.furnitures);
 
         //trouver toutes les cases adjacente
         for (var i = 0; i < map_tiles.length; i++) {
@@ -400,12 +455,20 @@ class Fire {
         for (var i = 0; i < adjacents.length; i++) {
             var taux = Math.floor(Math.random() * (burnning_speed * 4000) * delta) + 1;
 
-            if (adjacents[i].inflammability * current_inflamed >= taux) {
-                map.specials.push( new Fire('tiny', adjacents[i].current.x, adjacents[i].current.y) );
+            
+            if (adjacents[i].inflammability * this.friend.current.inflamed >= taux) {
+            
+                //console.log(adjacents[i].inflammability, this.friend.current.inflamed, taux);
+
+                var new_tile = new Fire('tiny', adjacents[i].current.x, adjacents[i].current.y);
+                new_tile.friend = adjacents[i];
                 adjacents[i].current.alight = 1;
+
+                map.specials.push(new_tile);
             }
 
         }
+        
        
 
     }
@@ -478,11 +541,14 @@ class BurningTile extends Tiles {
                     super.draw();
                     this.sprites[1].draw(this.current.x, this.current.y);
                     break;
+
                 default :
                     this.sprites[2].draw(this.current.x, this.current.y);
+                    if (this.collision(this.bounds)) this.sprites[1].draw(this.current.x, this.current.y);
                     break;
             }
         }
+
     }
 
     ignite(inflammability, heatproof, heat, burned, inflamed) {
@@ -499,6 +565,9 @@ class BurningTile extends Tiles {
         var taux = Math.floor(Math.random() * (burnning_speed * 1000) * delta) + 1;
 
         if (this.inflammability * this.heat >= taux) {
+
+            //console.log(this.inflammability, this.heat, taux, this.current.inflamed, this.current.burned);
+
             if (this.current.burned > 3) {
                 this.current.inflamed--;
             } else {
@@ -506,14 +575,16 @@ class BurningTile extends Tiles {
             }
         }
 
-        if (this.current.inflamed / this.heatproof >= taux) {
+
+        //console.log(this.current.inflamed, (this.heatproof/10), taux);
+        if (this.current.inflamed / (this.heatproof/10) >= taux) {
             this.current.burned++;
         }
 
     }
 
     intersecte(bound) {
-        if (this.current.burned > 3 && this.current.inflamed < 1) {
+        if (this.current.burned > 3) {
             return false;
         } else {
             return !(
@@ -686,9 +757,18 @@ class Fireman {
             if (map_tiles[i].intersecte(this.boundsSoak())) {
                 //console.log(map_tiles[i].current.inflamed );
                 
-                if (map_tiles[i].current.inflamed > 10) map_tiles[i].current.inflamed = map_tiles[i].current.inflamed / 2;
-                if (map_tiles[i].current.inflamed > 0) map_tiles[i].current.inflamed -= (delta/100);
-                //map_tiles[i].highlight = 1;
+                if (map_tiles[i].current.inflamed > 10) map_tiles[i].current.inflamed = Math.round(map_tiles[i].current.inflamed / 2);
+                if (map_tiles[i].current.inflamed >= 0) map_tiles[i].current.inflamed -= (delta/100);
+                if (map_tiles[i].current.inflamed < 0) {
+                    map_tiles[i].current.alight = 0;
+                }
+
+            }
+        }
+
+        for (var i = 0; i < map.specials.length; i++) {
+            if (map.specials[i].friend && map.specials[i].friend.current.burned > 3) {
+                map.specials[i].remove = true;
             }
         }
 

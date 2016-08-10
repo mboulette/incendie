@@ -72,6 +72,16 @@ class Map {
 
 	    	if (contents.special.action == 'fireon') {
 	    		var new_tile = new Fire(contents.special.size, contents.current.x, contents.current.y);
+		        var map_tiles = this.walls.concat(this.floors, this.furnitures);	
+
+
+		        for (var i = 0; i < map_tiles.length; i++) {
+		            if (map_tiles[i].intersecte(new_tile.bounds())) {
+		            	new_tile.friend = map_tiles[i];
+		            	map_tiles[i].current.alight = 1;
+		            	break;
+		            }
+		        }
 	    	}
 
 
@@ -92,7 +102,7 @@ class Map {
 			//(inflammability, heatproof, heat, burned, inflamed)
 			// enflamme : inflammability * heat
 			// brule : inflamed / heatproof
-			if (layer_name == 'walls') new_tile.ignite(10, 10, 10, 0, 0);
+			if (layer_name == 'walls') new_tile.ignite(10, 5, 10, 0, 0);
 			if (layer_name == 'furnitures') new_tile.ignite(20, 1, 10, 0, 0);
 			if (layer_name == 'floors') new_tile.ignite(2, 1, 1, 0, 0);
 
@@ -109,7 +119,9 @@ class Map {
 
 	clean() {
 	    
+
         this.specials = this.specials.filter(function(object){
+            //if (object.remove) console.log('yep');
             return !object.remove;
         });
 
