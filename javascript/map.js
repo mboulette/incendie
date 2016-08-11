@@ -119,7 +119,7 @@ class Map {
 
 	clean() {
 	    
-	    /*
+	    
         for (var i = 0; i < map.specials.length; i++) {
             if (map.specials[i].friend && map.specials[i].friend.current.burned > 3) {
                 map.specials[i].friend.current.alight = 0;
@@ -127,7 +127,7 @@ class Map {
                 map.specials[i].remove = true;
             }
         }
-        */
+        
 
         this.specials = this.specials.filter(function(object){
             //if (object.remove) console.log('yep');

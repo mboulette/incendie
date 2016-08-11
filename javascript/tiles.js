@@ -746,7 +746,7 @@ class Fireman {
 
     destroy(delta) {
         var map_tiles = map.walls.concat(map.furnitures);
-        var taux = Math.floor(Math.random() * (2000) / delta) + 1;
+        var taux = Math.floor(Math.random() * (4000) / delta) + 1;
 
         for (var i = 0; i < map_tiles.length; i++) {
             if (map_tiles[i].collision(this.boundsAction())) {                

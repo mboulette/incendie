@@ -37,38 +37,38 @@
         var change_direction = function(player) {
             player.action = 'none';
 
-
+            //console.log(keyboard, player.direction);
 
             if (keyboard[37]) {
                 if (player.direction != 'left') {
                     player.direction = 'left';                   
                     peer_send({'action' : 'change_direction', 'current' : player });
-                    return;
                 }
+                return;
             }
 
             if (keyboard[38]) {
                 if (player.direction != 'up') {
                     player.direction = 'up';                   
                     peer_send({'action' : 'change_direction', 'current' : player });
-                    return;
                 }
+                return;
             }
 
             if (keyboard[39]) {
                 if (player.direction != 'right') {
                     player.direction = 'right';                   
                     peer_send({'action' : 'change_direction', 'current' : player });
-                    return;
                 }
+                return;
             }
 
             if (keyboard[40]) {
                 if (player.direction != 'down') {
                     player.direction = 'down';                   
                     peer_send({'action' : 'change_direction', 'current' : player });
-                    return;
                 }
+                return;
             }
 
 
@@ -77,7 +77,6 @@
                     player.action = 'soak';
                     peer_send({'action' : 'change_direction', 'current' : player });
                 }
-                return;
             }
 
 
@@ -86,7 +85,6 @@
                     player.action = 'destroy';
                     peer_send({'action' : 'change_direction', 'current' : player });
                 }
-                return;
             }
 
             if (player.direction != 'none') {
@@ -119,6 +117,7 @@
             for (var i = 0; i < players.length; i++) {
                 if (players[i].current.id == peer.connections[peer_server_name][0].id) {
                     move_viewport(i);
+                    
                     change_direction(players[i].current);
                     break;
                 }
