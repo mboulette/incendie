@@ -37,6 +37,8 @@
         var change_direction = function(player) {
             player.action = 'none';
 
+
+
             if (keyboard[37]) {
                 if (player.direction != 'left') {
                     player.direction = 'left';                   
@@ -73,6 +75,15 @@
             if (keyboard[32]) {
                 if (player.action != 'soak') {
                     player.action = 'soak';
+                    peer_send({'action' : 'change_direction', 'current' : player });
+                }
+                return;
+            }
+
+
+            if (keyboard[90]) {
+                if (player.action != 'destroy') {
+                    player.action = 'destroy';
                     peer_send({'action' : 'change_direction', 'current' : player });
                 }
                 return;

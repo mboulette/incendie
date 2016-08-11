@@ -1,0 +1,107 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Incendie</title>
+
+    <style>
+		html, body {
+		  width:  100%;
+		  height: 100%;
+		  margin: 0px;
+		  overflow: hidden;
+		}
+
+		canvas { background-color: #eee;
+		  width:  100%;
+		  height: 100%;
+		}
+    </style>
+
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+
+    <script>
+
+		var ctx;
+    	var current_x = 0;
+    	var current_y = 0;
+
+    	var orientation_x = 0;
+    	var orientation_y = 0;
+    	var timer = performance.now();
+
+
+        $(document).ready(function() {
+
+            board = $('canvas')[0];
+            ctx = board.getContext('2d');
+
+            ctx.canvas.width = window.innerWidth;
+            ctx.canvas.height = window.innerHeight;
+
+            current_x = ctx.canvas.width / 2;
+            current_y = ctx.canvas.height / 2;
+
+
+            $(window).resize(function() {
+                ctx.canvas.width = window.innerWidth;
+                ctx.canvas.height = window.innerHeight;        
+            });
+
+
+			window.addEventListener("deviceorientation", function(event){
+				/*
+				$('#alpha').html(event.alpha);
+				$('#beta').html(event.beta);
+				$('#gamma').html(event.gamma);
+				*/
+
+				orientation_x = 0;
+				orientation_y = 0;
+
+				if (!isNaN(event.gamma)) orientation_x = event.gamma;
+				if (!isNaN(event.beta)) orientation_y = event.beta;
+			
+			}, true);        
+
+
+	        var main = function(now) {
+
+	        	var delta = (now - timer) / 10;       	
+
+	        	current_x += (orientation_x) * (delta);
+	        	current_y += (orientation_y) * (delta);
+
+	        	if (current_x < 0) current_x = 0;
+	        	if (current_y < 0) current_y = 0;
+	        	if (current_x > ctx.canvas.width) current_x = ctx.canvas.width;
+	        	if (current_y > ctx.canvas.height) current_y = ctx.canvas.height;
+
+	            ctx.save();
+	            ctx.clearRect(0, 0, board.width, board.height);
+	            
+				ctx.beginPath();
+				ctx.arc(current_x, current_y, 10, 0, 2*Math.PI);
+				ctx.fill();
+
+				ctx.beginPath();
+				ctx.fillText('x:'+Math.round(current_x)+'; y:'+Math.round(current_y)+';', 10, 10);
+
+	            ctx.restore();
+	            timer = now;
+	            requestAnimationFrame(main);
+	        };
+
+	        main(performance.now());
+		});
+
+    </script>
+
+</head>
+<body>
+
+	<canvas id="game_canvas"></canvas>
+
+</body>
+</html>

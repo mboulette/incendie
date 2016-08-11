@@ -453,7 +453,7 @@ class Fire {
         }
 
         for (var i = 0; i < adjacents.length; i++) {
-            var taux = Math.floor(Math.random() * (burnning_speed * 4000) * delta) + 1;
+            var taux = Math.floor(Math.random() * (burnning_speed * 4000) / delta) + 1;
 
             
             if (adjacents[i].inflammability * this.friend.current.inflamed >= taux) {
@@ -562,7 +562,7 @@ class BurningTile extends Tiles {
     }
 
     burn(delta) {
-        var taux = Math.floor(Math.random() * (burnning_speed * 1000) * delta) + 1;
+        var taux = Math.floor(Math.random() * (burnning_speed * 1000) / delta) + 1;
 
         if (this.inflammability * this.heat >= taux) {
 
@@ -657,7 +657,7 @@ class Fireman {
         };
     }
 
-    boundsSoak() {
+    boundsAction() {
 
         var x = this.current.x + 32;
         var y = this.current.y + 32;
@@ -723,38 +723,47 @@ class Fireman {
         this.move(delta);
         this.animations[this.current.direction+'-'+this.current.color].update();
 
-        if (this.current.action == 'soak') this.updateSoak(delta);
+        if (this.current.action == 'soak') this.soak(delta);
+        if (this.current.action == 'destroy') this.destroy(delta);
 
     }
 
     drawSoak() {
-        /*
-        var x = this.current.left + 32;
-        var y = this.current.y + 32;
-        if (this.current.last == 'left') x -= 40;
-        if (this.current.last == 'right') x += 40;
-        if (this.current.last == 'up') y -= 40;
-        if (this.current.last == 'down') y += 40;
-
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(0, 0, 255, 1)';
-        ctx.arc(x, y, 10, 0, 2*Math.PI);
-        ctx.stroke();
-        */
-
-        var bound = this.boundsSoak();
+        var bound = this.boundsAction();
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(0, 0, 255, 1)';
         ctx.rect(bound.left, bound.top, bound.right - bound.left, bound.bottom - bound.top);
         ctx.stroke();  
     }
 
-    updateSoak(delta) {
+    drawDestroy() {
+        var bound = this.boundsAction();
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0, 255, 0, 1)';
+        ctx.rect(bound.left, bound.top, bound.right - bound.left, bound.bottom - bound.top);
+        ctx.stroke();  
+    }
+
+    destroy(delta) {
+        var map_tiles = map.walls.concat(map.furnitures);
+        var taux = Math.floor(Math.random() * (2000) / delta) + 1;
+
+        for (var i = 0; i < map_tiles.length; i++) {
+            if (map_tiles[i].collision(this.boundsAction())) {                
+                
+                if (taux < 10 && map_tiles[i].current.burned < 4) {
+                    map_tiles[i].current.burned += 1;
+                }
+            }
+        }
+    }
+
+    soak(delta) {
 
         var map_tiles = map.walls.concat(map.floors, map.furnitures);
 
         for (var i = 0; i < map_tiles.length; i++) {
-            if (map_tiles[i].intersecte(this.boundsSoak())) {
+            if (map_tiles[i].intersecte(this.boundsAction())) {
                 //console.log(map_tiles[i].current.inflamed );
                 
                 if (map_tiles[i].current.inflamed > 10) map_tiles[i].current.inflamed = Math.round(map_tiles[i].current.inflamed / 2);
@@ -790,6 +799,7 @@ class Fireman {
         }
 
         if (this.current.action == 'soak') this.drawSoak();
+        if (this.current.action == 'destroy') this.drawDestroy();
 
     }
 

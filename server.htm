@@ -41,6 +41,8 @@
         var change_direction = function(player) {
             player.action = 'none';
 
+            //console.log(player.direction);
+
             if (keyboard[37]) {
                 if (player.direction != 'left') {
                     player.direction = 'left';
@@ -72,6 +74,10 @@
 
             if (keyboard[32]) {
                 player.action = 'soak';
+            }
+
+            if (keyboard[90]) {
+                player.action = 'destroy';
             }
 
             if (player.direction != 'none') {
