@@ -1,0 +1,124 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Getting Started with Three.js</title>    
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width   : 100%;
+                height  : 100%;
+                margin  : 0;
+                padding : 0;
+            }
+
+            #renderCanvas {
+                width   : 100%;
+                height  : 100%;
+                touch-action: none;
+            }
+        </style>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r79/three.min.js"></script>
+        <script>
+        window.onload = function() {
+
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+
+            var renderer = new THREE.WebGLRenderer({antialias:true});
+            renderer.setSize(width, height);
+            document.body.appendChild(renderer.domElement);
+
+            var scene = new THREE.Scene();
+
+            var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 10000);
+            camera.position.z = 5;
+            //camera.position.set(-15, 10, 10);
+            //camera.lookAt(scene.position);
+
+            var geometry = new THREE.BoxGeometry(1, 1, 1);
+
+            var cube;
+
+            //var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+
+            // Define six colored materials 
+            /*
+            var boxMaterials = [ 
+                new THREE.MeshBasicMaterial({color:0xFF0000}), 
+                new THREE.MeshBasicMaterial({color:0x00FF00}), 
+                new THREE.MeshBasicMaterial({color:0x0000FF}), 
+                new THREE.MeshBasicMaterial({color:0xFFFF00}), 
+                new THREE.MeshBasicMaterial({color:0x00FFFF}), 
+                new THREE.MeshBasicMaterial({color:0xFFFFFF}) 
+            ]; 
+            var material = new THREE.MeshFaceMaterial(boxMaterials); 
+            */
+
+
+
+            
+            //THREE.ImageUtils.crossOrigin = '';
+            //var texture = new THREE.ImageUtils.loadTexture("http://mboulette.16mb.com/dungeon/images/brick1.jpg");
+
+
+            /*
+            var light = new THREE.PointLight( 0xFFFF00 );
+            light.position.set( 10, 0, 10 );
+            scene.add( light );
+            */
+
+            //renderer.setClearColor( 0xdddddd, 1);
+            //renderer.render( scene, camera );
+
+            function render() {
+
+                //cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+
+                renderer.render(scene, camera);
+                requestAnimationFrame(render);
+            }
+            
+
+
+
+
+            // instantiate a loader
+            var loader = new THREE.TextureLoader();
+
+            //allow cross origin loading
+            loader.crossOrigin = '';
+
+            // load a resource
+            loader.load('http://mboulette.16mb.com/dungeon/images/brick1.jpg',
+                // Function when resource is loaded
+                function ( texture ) {
+
+                    
+                    var material = new THREE.MeshBasicMaterial({ 
+                        map:texture, 
+                        side:THREE.DoubleSide 
+                    }); 
+
+                    cube = new THREE.Mesh( geometry, material );
+                    scene.add(cube);
+
+
+                    render();
+
+                },
+                // Function called when download progresses
+                function ( xhr ) {},
+                // Function called when download errors
+                function ( xhr ) {}
+            );
+
+        };
+
+
+        </script>
+    </head>
+    <body></body>
+    </html>

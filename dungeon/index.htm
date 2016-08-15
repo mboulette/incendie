@@ -25,98 +25,238 @@
     <canvas id="renderCanvas"></canvas>
     <script>
         window.addEventListener('DOMContentLoaded', function(){
+            var timer_delta = performance.now();
+
             // get the canvas DOM element
             var canvas = document.getElementById('renderCanvas');
 
             // load the 3D engine
             var engine = new BABYLON.Engine(canvas, true);
 
-            
-            var createGround = function(scene) {
+            var keyboard = [];
+            var torch, torch2;
+            var torchColor = '#FFFFFF';
+            var torch_intensity = 0.5;
 
-                // Tiled Ground Tutorial
+
+             var calculateXY = function(angle, distance) {
+                var corner = 90 * Math.PI / 180;
+                var ratio = distance / Math.sin(corner);
+
+                return {y: (ratio * Math.sin(Math.PI - angle - corner)), x: (ratio * Math.sin(angle))};
+            }
+
+
+            var createFloor = function(x1, y1, x2, y2, scene) {
+
+                var width = (x2*5 - x1*5);
+                var depth = (y2*5 - y1*5);
+
+                //New textures
+                var stone157 = new BABYLON.StandardMaterial("stone157", scene);
+                stone157.backFaceCulling = false; 
+
+                stone157.diffuseTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/stone157.jpg", scene);
+                stone157.diffuseTexture.uScale = width/8;
+                stone157.diffuseTexture.vScale = depth/8;               
                 
-                // Part 1 : Creation of Tiled Ground
-                // Parameters
-                var xmin = -20;
-                var zmin = -20;
-                var xmax =  20;
-                var zmax =  20;
-                var precision = {
-                    "w" : 2,
-                    "h" : 2
-                };
-                var subdivisions = {
-                    'h' : zmax - zmin,
-                    'w' : xmax - xmin
-                };
-                // Create the Tiled Ground
-                var tiledGround = new BABYLON.Mesh.CreateTiledGround("Tiled Ground", xmin, zmin, xmax, zmax, subdivisions, precision, scene);
-
-
-                // Part 2 : Create the multi material
-                // Create differents materials
-                var whiteMaterial = new BABYLON.StandardMaterial("White", scene);
-                whiteMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
-
-                var blackMaterial = new BABYLON.StandardMaterial("Black", scene);
-                blackMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-
-                // Create Multi Material
-                var multimat = new BABYLON.MultiMaterial("multi", scene);
-                multimat.subMaterials.push(whiteMaterial);
-                multimat.subMaterials.push(blackMaterial);
+                stone157.bumpTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/stone157-map.png", scene);
+                stone157.bumpTexture.uScale = width/8;
+                stone157.bumpTexture.vScale = depth/8;
+                
+                
+                // create a built-in "ground" shape; its constructor takes the same 5 params as the sphere's one
+                
+                var ground = BABYLON.Mesh.CreateGround('ground1', width, depth, 2, scene);
+                ground.material = stone157;
+                ground.position.z = y1*5 + (depth/2);
+                ground.position.x = x1*5 + (width/2);
+                
+                
+                var ground2 = BABYLON.Mesh.CreateGround('ground1', width, depth, 2, scene);
+                ground2.material = stone157;
+                ground2.position.z = y1*5 + (depth/2);
+                ground2.position.x = x1*5 + (width/2);
+                ground2.position.y = 8
+                ground2.rotation.x = Math.PI;
                 
 
-                // Part 3 : Apply the multi material
-                // Define multimat as material of the tiled ground
-                tiledGround.material = multimat;
-               
-                // Needed variables to set subMeshes
-                var verticesCount = tiledGround.getTotalVertices();
-                var tileIndicesLength = tiledGround.getIndices().length / (subdivisions.w * subdivisions.h);
+                /*
+                var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+                skyboxMaterial.backFaceCulling = false; 
+                skyboxMaterial.diffuseColor = new BABYLON.Color3(1.0, 0.2, 0.7);
+
+
+                var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {width: width, height: 9, depth: depth}, scene);
+                skybox.material = skyboxMaterial;
+                skybox.position.z = y1*5 + (depth/2);
+                skybox.position.x = x1*5 + (width/2);
+                skybox.position.y = 4;
+                */
                 
-                // Set subMeshes of the tiled ground
-                tiledGround.subMeshes = [];
-                var base = 0;
-                for (var row = 0; row < subdivisions.h; row++) {
-                    for (var col = 0; col < subdivisions.w; col++) {
-                        tiledGround.subMeshes.push(new BABYLON.SubMesh(row%2 ^ col%2, 0, verticesCount, base , tileIndicesLength, tiledGround));
-                        base += tileIndicesLength;
-                    }
-                }
+
 
             }
 
+            var createWall = function(x1, y1, x2, y2, scene) {
+                //wall_dim = {width: 4, height: 8, depth: 12, x: 0, y: 20};
+                
+                var width = (x2*5 - x1*5);
+                var depth = (y2*5 - y1*5);
+
+                wall_dim = {width: width, height: 8, depth: depth, x: x1*5, y: y1*5};
+
+                var frontTextures = new BABYLON.StandardMaterial("brickTextures", scene);
+                frontTextures.diffuseTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/brick1.jpg", scene);
+                frontTextures.diffuseTexture.uScale = wall_dim.width/8;
+                frontTextures.diffuseTexture.vScale = wall_dim.height/8; 
+                
+                frontTextures.bumpTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/brick1-map.png", scene);
+                frontTextures.bumpTexture.uScale = wall_dim.width/8;
+                frontTextures.bumpTexture.vScale = wall_dim.height/8;
+
+                var sideTextures = new BABYLON.StandardMaterial("brickTextures", scene);
+                sideTextures.diffuseTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/brick1.jpg", scene);
+                sideTextures.diffuseTexture.uScale = wall_dim.depth/8;
+                sideTextures.diffuseTexture.vScale = wall_dim.height/8;               
+                
+                sideTextures.bumpTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/brick1-map.png", scene);
+                sideTextures.bumpTexture.uScale = wall_dim.depth/8;
+                sideTextures.bumpTexture.vScale = wall_dim.height/8;
+
+                //frontTextures.backFaceCulling = false;
+                //sideTextures.backFaceCulling = false;
+ 
+                var front = BABYLON.MeshBuilder.CreatePlane("front", wall_dim, scene);
+                front.material = frontTextures;
+                front.position.y = wall_dim.height/2;
+                front.position.z = wall_dim.y
+                front.position.x = wall_dim.x+(wall_dim.width / 2);
+                front.checkCollisions = true;
+ 
+                var back = BABYLON.MeshBuilder.CreatePlane("back", wall_dim, scene);
+                back.material = frontTextures;
+                back.rotation.y = Math.PI;
+                back.position.y = wall_dim.height/2;
+                back.position.z = wall_dim.y+wall_dim.depth;
+                back.position.x = wall_dim.x+(wall_dim.width / 2); 
+                back.checkCollisions = true;             
+
+                var right = BABYLON.MeshBuilder.CreatePlane("right", {width: wall_dim.depth, height: wall_dim.height}, scene);
+                right.material = sideTextures;
+                right.rotation.y = 0 - Math.PI/2;
+                right.position.y = wall_dim.height/2;
+                right.position.z = wall_dim.y+(wall_dim.depth / 2);
+                right.position.x = wall_dim.x+wall_dim.width;
+                right.checkCollisions = true;
+
+                var left = BABYLON.MeshBuilder.CreatePlane("left", {width: wall_dim.depth, height: wall_dim.height}, scene);
+                left.material = sideTextures;
+                left.rotation.y = Math.PI/2;
+                left.position.y = wall_dim.height/2;
+                left.position.z = wall_dim.y+(wall_dim.depth / 2);
+                left.position.x = wall_dim.x;
+                left.checkCollisions = true;
+
+            }
 
             // createScene function that creates and return the scene
             var createScene = function(){
                 // create a basic BJS Scene object
                 var scene = new BABYLON.Scene(engine);
+                //scene.collisionsEnabled = true;
 
                 // create a FreeCamera, and set its position to (x:0, y:5, z:-10)
-                var camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 2, 0), scene);
+                var camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(10, 4, 0), scene);
 
                 // target the camera to scene origin
                 //camera.setTarget(BABYLON.Vector3.Zero());
 
                 // attach the camera to the canvas
-                camera.attachControl(canvas, false);
+                //camera.ellipsoid = new BABYLON.Vector3(4, 4, 4);
+                //camera.attachControl(canvas, false);
+                //camera.checkCollisions = true;
+                //camera.inputs.remove(camera.inputs.attached.mouse);
+
 
                 // create a basic light, aiming 0,1,0 - meaning, to the sky
-                var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+                //var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+                
+                
+                torch = new BABYLON.PointLight("Omni0", new BABYLON.Vector3(0, 0, 0), scene);
+                torch.parent = camera;
+                torch.intensity = 1;
+                torch.exponent = 3.0;
+                torch.diffuse = BABYLON.Color3.FromHexString('#FFFFFF');
+                torch.specular = BABYLON.Color3.FromHexString('#522c00');
+                torch.range = 35;
+                
+                var light = new BABYLON.SpotLight("Spot1", new BABYLON.Vector3(0, 4, 0), new BABYLON.Vector3(0, -1, 0), 3, 2, scene);
+                light.intensity = 0.9;
+                light.parent = camera;
+                
+                
+                var light2 = new BABYLON.SpotLight("Spot2", new BABYLON.Vector3(0, -4, 0), new BABYLON.Vector3(0, 1, 0), 3, 2, scene);
+                light2.intensity = 0.9;
+                light2.parent = camera;
+                console.log(light2);
+                
+
+                /*
+                var light2 = new BABYLON.SpotLight("Spot0", new BABYLON.Vector3(0, 6, 0), new BABYLON.Vector3(0, 0, 1), 2, 2, scene);
+                light2.intensity = 0.5;
+                light2.parent = camera; 
+                light2.range = 40;
+                */
+
+                /*
+                torch2 = new BABYLON.PointLight("Omni0", new BABYLON.Vector3(0, 0, 0), scene);
+                torch2.intensity = 1;
+                torch2.exponent = 3.0;
+                torch2.diffuse = BABYLON.Color3.FromHexString('#999999');
+                torch2.specular = BABYLON.Color3.FromHexString('#522c00');
+                torch2.range = 60;
+                */
+
+
+                
+                //torch2 = new BABYLON.SpotLight("Spot0", new BABYLON.Vector3(10, 10, 10), new BABYLON.Vector3(1, 1, 1), 0.8, 2, scene);
+                //torch2.intensity = 10;
+                //torch2.diffuse = new BABYLON.Color3(1, 0, 0);
+                //torch2.specular = new BABYLON.Color3(1, 1, 1);
+                
+
+                /*        
+                var light0 = new BABYLON.DirectionalLight("Dir0", new BABYLON.Vector3(0, 0, 0), scene);
+                light0.intensity = 2;
+                light0.exponent = 3.0;
+                light0.diffuse = BABYLON.Color3.FromHexString('#FFFFFF');
+                light0.specular = BABYLON.Color3.FromHexString('#522c00');
+                light0.range = 60;
+                */
+                
+                /*
+                var shadowGenerator = new BABYLON.ShadowGenerator(1024, torch);
+                shadowGenerator.setDarkness(0.5);
+                shadowGenerator.usePoissonSampling = true;
+                shadowGenerator.useBlurVarianceShadowMap = true;
+                shadowGenerator.blurBoxOffset = 3.0;
+                shadowGenerator.bias = 0.00001;
+                */
+
 
                 // create a built-in "sphere" shape; its constructor takes 5 params: name, width, depth, subdivisions, scene
-                var sphere = BABYLON.Mesh.CreateSphere('sphere1', 16, 2, scene);
+                //var sphere = BABYLON.Mesh.CreateSphere('sphere1', 16, 2, scene);
 
                 // move the sphere upward 1/2 of its height
                 //sphere.position.y = 1;
 
-                // create a built-in "ground" shape; its constructor takes the same 5 params as the sphere's one
-                var ground = BABYLON.Mesh.CreateGround('ground1', 40, 40, 2, scene);
-                ground.diffuseTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/stone157.jpg", scene);
                 //createGround(scene);
-
+                createFloor(0, 0, 8, 8, scene);
+                createWall(0, 0, 1, 8, scene);
+                createWall(7, 0, 8, 8, scene);
+                createWall(1, 7, 7, 8, scene);
+                createWall(1, 4, 4, 5, scene);
 
 
                 // return the created scene
@@ -128,7 +268,41 @@
 
             // run the render loop
             engine.runRenderLoop(function(){
+
+                var displacement = calculateXY(scene.activeCamera.rotation.y, 0.5);
+
+                if (keyboard['ArrowUp']) {
+                    scene.activeCamera.position.x += displacement.x;
+                    scene.activeCamera.position.z += displacement.y;
+                }
+                if (keyboard['ArrowDown']) {
+                    scene.activeCamera.position.x -= displacement.x;
+                    scene.activeCamera.position.z -= displacement.y;
+                    console.log(torch2);
+                }
+
+                if (keyboard['ArrowRight']) {
+                    scene.activeCamera.cameraRotation.y += 0.005; 
+                }
+
+                if (keyboard['ArrowLeft']) {
+                    scene.activeCamera.cameraRotation.y -= 0.005;                 
+                }
+
+
+                /*
+                torch2.position.x = scene.activeCamera.position.x;
+                torch2.position.z = scene.activeCamera.position.z;
+                */
+                
+                
+
+                //torch.specular = BABYLON.Color3.FromHexString(torchColor);
+                //rnd = Math.floor(Math.random() * 2) + 4  
+                //torch.intensity = rnd / 10;
+                //torch.exponent = rnd;
                 scene.render();
+                timer_delta = performance.now();
             });
 
             // the canvas/window resize event handler
@@ -137,7 +311,27 @@
             });
 
 
+            window.addEventListener('keydown', function(event){
+                //console.log(event.key);
+                keyboard[event.key] = true;
+            });
 
+            window.addEventListener('keyup', function(event){
+                //console.log(event.key);
+                keyboard[event.key] = false;
+            });
+
+
+            
+            setInterval(function(){ 
+                
+                if (torchColor == '#FFD285') {
+                    torchColor = '#FFFFFF'
+                } else {
+                    torchColor = '#FFD285';
+                }
+            }, 1000);
+            
 
 
         });

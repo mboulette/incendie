@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Babylon - Getting Started</title>
+
+    <script src="javascript/babylon.js"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width   : 100%;
+            height  : 100%;
+            margin  : 0;
+            padding : 0;
+        }
+
+        #renderCanvas {
+            width   : 100%;
+            height  : 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        window.addEventListener('DOMContentLoaded', function(){
+
+            var createFloor = function(x1, y1, x2, y2, scene) {
+
+                var width = (x2*5 - x1*5);
+                var depth = (y2*5 - y1*5);
+
+                //New textures
+                var stone157 = new BABYLON.StandardMaterial("stone157", scene);
+                stone157.backFaceCulling = false; 
+                
+                stone157.diffuseTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/stone157.jpg", scene);
+                stone157.diffuseTexture.uScale = width/8;
+                stone157.diffuseTexture.vScale = depth/8;               
+                
+                stone157.bumpTexture = new BABYLON.Texture("http://mboulette.16mb.com/dungeon/images/stone157-map.png", scene);
+                stone157.bumpTexture.uScale = width/8;
+                stone157.bumpTexture.vScale = depth/8;
+                
+                
+                // create a built-in "ground" shape; its constructor takes the same 5 params as the sphere's one
+                
+                var ground = BABYLON.Mesh.CreateGround('ground1', width, depth, 2, scene);
+                ground.material = stone157;
+                ground.position.z = y1*5 + (depth/2);
+                ground.position.x = x1*5 + (width/2);
+                
+                               
+                
+                /*
+                var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {width: width, height: 8, depth: depth}, scene);
+                skybox.material = stone157;
+                skybox.position.z = y1*5 + (depth/2);
+                skybox.position.x = x1*5 + (width/2);
+                skybox.position.y = 4;
+                */
+
+
+            }
+
+            var createScene = function () {
+
+                // This creates a basic Babylon Scene object (non-mesh)
+                var scene = new BABYLON.Scene(engine);
+
+                // This creates and positions a free camera (non-mesh)
+                var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 5, -10), scene);
+
+                // This targets the camera to scene origin
+                camera.setTarget(BABYLON.Vector3.Zero());
+
+                // This attaches the camera to the canvas
+                camera.attachControl(canvas, true);
+
+                // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+                var light = new BABYLON.SpotLight("Spot0", new BABYLON.Vector3(20, 6, 20), new BABYLON.Vector3(0, -1, 0), 0.8, 64, scene);
+                
+                
+                // Default intensity is 1. Let's dim the light a small amount
+                light.intensity = 3;
+
+                
+
+                createFloor(0, 0, 8, 8, scene);
+
+                return scene;
+
+            };
+
+
+
+
+
+
+            var timer_delta = performance.now();
+            var keyboard = [];
+
+            // get the canvas DOM element
+            var canvas = document.getElementById('renderCanvas');
+
+            // load the 3D engine
+            var engine = new BABYLON.Engine(canvas, true);
+
+            // call the createScene function
+            var scene = createScene();
+
+            // run the render loop
+            engine.runRenderLoop(function(){
+                scene.render();
+            });
+
+            // the canvas/window resize event handler
+            window.addEventListener('resize', function(){
+                engine.resize();
+            });
+
+
+            window.addEventListener('keydown', function(event){
+                //console.log(event.key);
+                keyboard[event.key] = true;
+            });
+
+            window.addEventListener('keyup', function(event){
+                //console.log(event.key);
+                keyboard[event.key] = false;
+            });
+
+
+
+
+        });
+
+
+
+
+    </script>
+</body>
+</html>
